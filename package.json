@@ -1,6 +1,6 @@
 {
   "name": "mopac7-wasm",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "license": "MIT AND BSD-3-Clause AND HPND",
   "description": "MOPAC 7 compiled to WebAssembly: MNDO, MINDO/3, AM1 and PM3 semi-empirical calculations, with molecular orbitals, in node and in the browser",
   "author": "Luc Patiny",
