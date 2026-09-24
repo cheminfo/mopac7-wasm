@@ -1,0 +1,317 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>mopac7-wasm</title><meta name="description" content="Documentation for mopac7-wasm"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">mopac7-wasm</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>mopac7-wasm</h1></div><div class="tsd-panel tsd-typography"><h1 id="mopac7-wasm" class="tsd-anchor-link">mopac7-wasm<a href="#mopac7-wasm" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p><a href="https://www.npmjs.com/package/mopac7-wasm"><img src="https://img.shields.io/npm/v/mopac7-wasm.svg" alt="NPM version"></a>
+<a href="https://www.npmjs.com/package/mopac7-wasm"><img src="https://img.shields.io/npm/dm/mopac7-wasm.svg" alt="npm download"></a>
+<a href="https://github.com/cheminfo/mopac7-wasm/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/mopac7-wasm.svg" alt="license"></a></p>
+<p>MOPAC 7, the 1993 public-domain semi-empirical molecular orbital program by
+James J. P. Stewart, compiled to WebAssembly. MNDO, MINDO/3, AM1 and PM3, with
+heats of formation, orbital energies, symmetry labels, molecular orbital
+coefficients and Mulliken charges, in node and in the browser.</p>
+<p>This is not a reimplementation. It is MOPAC 7.00 unchanged in its physics: the
+same Fortran, translated to C and compiled. Against a native build of that very
+C it reproduces every energy, charge, dipole and coordinate exactly;
+<a href="#provenance">Provenance</a> says what &quot;exactly&quot; covers, and names the one place it
+does not.</p>
+<h2 id="why-it-exists" class="tsd-anchor-link">Why it exists<a href="#why-it-exists" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Drawing a molecular orbital in a browser needs orbital energies that are close
+to reality and a wavefunction to draw. A study of the methods that a browser can
+run, scored against 50 experimental photoelectron bands over 14 molecules, put
+MOPAC's NDDO hamiltonians ahead of everything else available:</p>
+<table>
+<thead>
+<tr>
+<th>method</th>
+<th>mean absolute error</th>
+<th>download</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MNDO, this package</td>
+<td>0.69 eV</td>
+<td>0.3 MB</td>
+</tr>
+<tr>
+<td>AM1 / PM3, this package</td>
+<td>0.78 eV</td>
+<td>0.3 MB</td>
+</tr>
+<tr>
+<td>Extended Hückel, as <code>lcao.cheminfo.org</code> ships it</td>
+<td>1.45 eV</td>
+<td>~9 KB</td>
+</tr>
+<tr>
+<td>GFN2-xTB, through <code>@peterspackman/occjs</code></td>
+<td>1.57 eV</td>
+<td>5.4 MB</td>
+</tr>
+</tbody>
+</table>
+<p>(50 bands over 14 molecules, from the cheminfo lcao photoelectron reference set;
+the mean absolute error is taken over the bands without any fitted shift. The
+two comparators are the same study's rows for the model <code>lcao.cheminfo.org</code>
+currently ships and for GFN2-xTB through <code>@peterspackman/occjs</code>.)</p>
+<p>Cost, on node 26 / arm64, 8 cores. The embedded module is decoded and compiled
+once per JavaScript realm — 1.7 ms to compile, 3.2 ms for the first
+instantiation and 0.5 ms for every one after — so a calculation is an
+instantiation plus MOPAC's own run. <code>node scripts/bench.mjs --repeats 21</code> clocks
+that run at <strong>0.43 ms for water, 1.61 ms for benzene, 3.24 ms for naphthalene,
+6.57 ms for caffeine and 9.63 ms for ibuprofen</strong> (best of 21; medians 0.62,
+3.40, 3.46, 7.66 and 10.61 ms). End to end, <code>npm run benchmark</code> puts a whole
+<code>mopac7()</code> call on water at <strong>1.71–1.97 ms</strong> over three runs of ~390 samples
+each (±3 %), and the same call with nothing cached at <strong>10.6–11.2 ms</strong>, so
+caching the compiled module is worth <strong>5.6–6.6x</strong>.</p>
+<p>Those were measured on a machine that was not idle: the one-minute load average
+ran between 4.2 and 7.6 on its 8 cores while the benchmark was running. Every
+absolute timing above is therefore an upper bound, and the ratio is the figure
+to rely on.</p>
+<h2 id="installation" class="tsd-anchor-link">Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="console"><span class="hl-0">npm i mopac7-wasm</span>
+</code><button type="button">Copy</button></pre>
+
+<h2 id="usage" class="tsd-anchor-link">Usage<a href="#usage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="js"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">mopac7</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;mopac7-wasm&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">result</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-6">mopac7</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-2">elements:</span><span class="hl-0"> [</span><span class="hl-3">&#39;O&#39;</span><span class="hl-0">, </span><span class="hl-3">&#39;H&#39;</span><span class="hl-0">, </span><span class="hl-3">&#39;H&#39;</span><span class="hl-0">],</span><br/><span class="hl-0">  </span><span class="hl-2">coordinates:</span><span class="hl-0"> [</span><br/><span class="hl-0">    [</span><span class="hl-7">0</span><span class="hl-0">, </span><span class="hl-7">0.066772</span><span class="hl-0">, </span><span class="hl-7">0</span><span class="hl-0">],</span><br/><span class="hl-0">    [</span><span class="hl-7">0.763466</span><span class="hl-0">, -</span><span class="hl-7">0.529952</span><span class="hl-0">, </span><span class="hl-7">0</span><span class="hl-0">],</span><br/><span class="hl-0">    [-</span><span class="hl-7">0.763466</span><span class="hl-0">, -</span><span class="hl-7">0.529952</span><span class="hl-0">, </span><span class="hl-7">0</span><span class="hl-0">],</span><br/><span class="hl-0">  ],</span><br/><span class="hl-0">  </span><span class="hl-2">method:</span><span class="hl-0"> </span><span class="hl-3">&#39;AM1&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-2">result</span><span class="hl-0">.</span><span class="hl-2">heatOfFormation</span><span class="hl-0">; </span><span class="hl-8">// -59.17072 kcal/mol</span><br/><span class="hl-2">result</span><span class="hl-0">.</span><span class="hl-2">ionizationPotential</span><span class="hl-0">; </span><span class="hl-8">// 12.44576 eV</span><br/><span class="hl-2">result</span><span class="hl-0">.</span><span class="hl-2">pointGroup</span><span class="hl-0">; </span><span class="hl-8">// &#39;C2V&#39;</span><br/><span class="hl-2">result</span><span class="hl-0">.</span><span class="hl-2">orbitals</span><span class="hl-0">[</span><span class="hl-7">3</span><span class="hl-0">]; </span><span class="hl-8">// { index: 3, energy: -12.446, occupancy: 2, symmetry: &#39;1B1&#39; }</span><br/><span class="hl-2">result</span><span class="hl-0">.</span><span class="hl-2">basis</span><span class="hl-0">[</span><span class="hl-7">3</span><span class="hl-0">]; </span><span class="hl-8">// { atomIndex: 0, element: &#39;O&#39;, type: &#39;Pz&#39; }</span><br/><br/><span class="hl-8">// The coefficient of atomic orbital `ao` in molecular orbital `mo`.</span><br/><span class="hl-4">const</span><span class="hl-0"> { </span><span class="hl-5">basis</span><span class="hl-0">, </span><span class="hl-5">coefficients</span><span class="hl-0"> } = </span><span class="hl-2">result</span><span class="hl-0">;</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">homo</span><span class="hl-0"> = </span><span class="hl-7">3</span><span class="hl-0">;</span><br/><span class="hl-2">coefficients</span><span class="hl-0">[</span><span class="hl-2">homo</span><span class="hl-0"> * </span><span class="hl-2">basis</span><span class="hl-0">.</span><span class="hl-2">length</span><span class="hl-0"> + </span><span class="hl-7">3</span><span class="hl-0">]; </span><span class="hl-8">// 1, the out-of-plane oxygen lone pair</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Coordinates are in ångström, energies in eV and the heat of formation in
+kcal/mol, exactly as MOPAC prints them.</p>
+<h3 id="orbital-phases-are-pinned-and-the-listings-are-not-used" class="tsd-anchor-link">Orbital phases are pinned, and the listing's are not used<a href="#orbital-phases-are-pinned-and-the-listings-are-not-used" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>An eigenvector is only defined up to its sign: <code>c</code> and <code>-c</code> are the same orbital,
+and which one a diagonaliser lands on depends on rounding inside its sweeps. Two
+builds of the same MOPAC really do disagree — on water at AM1, a native build of
+this repository's own translated C and the WebAssembly build print opposite signs
+for three of the six columns, every magnitude identical. Anything that colours a
+lobe by phase would flip with the build, so <code>result.coefficients</code> does not carry
+the listing's signs:</p>
+<blockquote>
+<p><strong>every molecular orbital is turned so that its largest-magnitude coefficient
+is positive</strong>, and when several coefficients tie at that magnitude the earliest
+atomic orbital decides.</p>
+</blockquote>
+<p>Water's 1B1 lone pair therefore comes back as <code>+1</code> on O 2p<sub>z</sub> whichever
+sign the listing happened to print, and this package's water coefficients are
+byte-identical to an independent MOPAC 7.01's under the same convention.</p>
+<p>A degenerate set is not covered by this, and cannot be: its members are only
+defined up to a rotation of the set. See <a href="#what-it-does-not-do">What it does not
+do</a>.</p>
+<h3 id="bundlers-and-workers" class="tsd-anchor-link">Bundlers and workers<a href="#bundlers-and-workers" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>There is nothing to configure, anywhere. The WebAssembly binary lives inside the
+JavaScript — gzipped, base64-encoded and decoded with <code>DecompressionStream</code> —
+so there is no <code>.wasm</code> file to serve, no <code>locateFile</code>, no <code>vite-plugin-wasm</code>, no
+<code>experiments.asyncWebAssembly</code> and no asset rule. The cost is the payload and
+the glue — 473 kB of bundle, 327 kB gzipped over the wire — plus a few
+milliseconds of decoding and compiling, once per JavaScript realm.</p>
+<p><code>compileMopac7()</code> returns the cached <code>WebAssembly.Module</code>, which is
+structured-cloneable: compile it once on the main thread, <code>postMessage</code> it to
+every worker, and each one instantiates it in well under a millisecond.</p>
+<h2 id="api" class="tsd-anchor-link">API<a href="#api" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th>export</th>
+<th>what it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mopac7(options)</code></td>
+<td>atoms in, a parsed <code>Mopac7Result</code> out; throws a <code>Mopac7Error</code> on failure</td>
+</tr>
+<tr>
+<td><code>buildMopac7Input(options)</code></td>
+<td>atoms in, a MOPAC deck out; no WebAssembly involved</td>
+</tr>
+<tr>
+<td><code>runMopac7Job(input)</code></td>
+<td>a deck in, <code>{ input, listing, diagnostics, exitCode }</code> out; never throws for MOPAC's own failures</td>
+</tr>
+<tr>
+<td><code>parseMopac7Output(listing)</code></td>
+<td>a listing in, a <code>Mopac7Result</code> out; parses a native MOPAC 7 run too, and pins the orbital phases</td>
+</tr>
+<tr>
+<td><code>compileMopac7()</code></td>
+<td>the cached <code>WebAssembly.Module</code>, for warming and for workers</td>
+</tr>
+<tr>
+<td><code>MOPAC7_ELEMENTS</code></td>
+<td>the elements each hamiltonian is parameterised for</td>
+</tr>
+<tr>
+<td><code>MOPAC7_LIMITS</code></td>
+<td>the array bounds this build was compiled with</td>
+</tr>
+<tr>
+<td><code>Mopac7Error</code></td>
+<td>carries <code>code</code>, and the deck and listing that produced the failure</td>
+</tr>
+</tbody>
+</table>
+<p><code>Mopac7Error.code</code> is one of <code>'input'</code>, <code>'keywords'</code>, <code>'geometry'</code>,
+<code>'parameters'</code>, <code>'scf'</code>, <code>'aborted'</code> or <code>'parse'</code>. A run that did not reach
+self-consistency throws rather than returning orbital energies nobody should
+use.</p>
+<p>Every instance is discarded after one calculation, and that is not a choice:
+MOPAC 7 is Fortran 77 whose whole state lives in <code>SAVE</code>d COMMON blocks, so a
+second run in the same instance inherits the first one's converged density. The
+module is compiled once and reused, which is where all the speed is — the
+benchmark measures the difference at 5.6–6.6x.</p>
+<h2 id="what-it-does-not-do" class="tsd-anchor-link">What it does not do<a href="#what-it-does-not-do" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li><strong>At most 30 non-hydrogen atoms and 30 hydrogens</strong> (150 atomic orbitals), the
+bounds MOPAC's own <code>SIZES</code> file was compiled with. Larger molecules are
+refused before the module is touched; <code>MOPAC7_LIMITS</code> carries the numbers.</li>
+<li><strong>Restricted (RHF) only.</strong> <code>spin</code> writes MOPAC's multiplicity keyword and
+MOPAC then runs its RHF half-electron treatment, which is a real open-shell
+calculation: a triplet O<sub>2</sub> comes out 27.4 kcal/mol below the singlet.
+There is no unrestricted option — <code>keywords: ['UHF']</code> is refused with
+<code>code: 'input'</code>, because a UHF listing carries separate alpha and beta
+eigenvector blocks and no <code>NO. OF FILLED LEVELS</code>, which is not a shape
+<code>Mopac7Result</code> has.</li>
+<li><strong>Inside a degenerate set the individual orbitals are not reproducible.</strong> Two
+builds may print different mixtures of, say, a π pair, because only the set is
+defined and not its members; the phase convention above cannot help. Over the
+42 verification decks the energies, charges and non-degenerate coefficients
+agree exactly between the WebAssembly and native builds while degenerate
+coefficients differ by as much as 1.3, and on one deck — AM1 hydrogen fluoride
+— the WebAssembly build leaves one vector of the 1PI pair all zero and
+<code>symtrz.f</code> cannot label the pair. Read a degenerate level as a set (sum its
+densities), never as two named orbitals.</li>
+<li><strong><code>keywords</code> entries are checked, not passed through.</strong> One keyword per array
+entry, printable ASCII, no whitespace; <code>+</code> (MOPAC's second-keyword-line
+marker), <code>SETUP</code> and <code>UHF</code> are refused with <code>code: 'input'</code>. Without that, a
+keyword holding a newline would shift every line of the deck below it and
+MOPAC would silently read the wrong geometry.</li>
+<li><strong>The elements MOPAC 7 carries, and no more.</strong> <code>MOPAC7_ELEMENTS</code> lists them
+per method — PM3 is the widest at 30 elements, MINDO/3 the narrowest at 10,
+and only PM3 has magnesium while only MNDO and AM1 have lithium. <code>Na</code> and <code>K</code>
+are sparkles in AM1 and PM3, not parameterised atoms; MOPAC says so itself in
+the listing.</li>
+<li><strong>No transition metals</strong> beyond MNDO chromium and zinc, no dispersion, no
+solvation, no excited states through this API.</li>
+<li><strong>No wall-clock budget.</strong> MOPAC's own <code>T=</code> limit reads a CPU clock that
+returns zero under WebAssembly, so a long optimisation cannot be cut short
+from inside. Run it in a worker if that matters.</li>
+<li><strong>Geometry optimisation is available</strong> (<code>optimize: true</code>) but every number in
+this README is a single point, which is what the reference set scored.</li>
+</ul>
+<p>MOPAC rebuilds the geometry through internal coordinates, so <code>result.coordinates</code>
+is MOPAC's frame and not the one handed in: atom 1 at the origin, atom 2 on +x.
+For one to three atoms the deck is a Z-matrix, because <code>getgeo.f</code> reads three
+atoms or fewer that way whatever <code>XYZ</code> says; and when the first three atoms are
+collinear a dummy <code>XX</code> atom is inserted to break the line, which MOPAC then
+drops from every printed block.</p>
+<h2 id="provenance" class="tsd-anchor-link">Provenance<a href="#provenance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The 156 Fortran-77 files come from the <code>1993_MOPAC7</code> directory of
+<a href="https://github.com/openmopac/MOPAC-archive">openmopac/MOPAC-archive</a> at commit
+<code>ed31531</code>, checked by file count, by a tree digest and by the presence of its own
+public-domain notice. They are translated to C with
+<a href="https://www.netlib.org/f2c/">f2c</a> 20240504, built from source, and compiled with
+<a href="https://emscripten.org/">Emscripten</a> against netlib libf2c. Eight small patches
+are applied, each a file in <code>patches/</code> whose header quotes the exact compiler,
+linker or sanitizer message it fixes: five are portability fixes and three are
+genuine COMMON-block defects in MOPAC 7.00 that MOPAC 7.01 also fixed, found
+here with AddressSanitizer and a static size check the build runs on every
+block. Nothing in the hamiltonians, the parameters or the SCF is touched.</p>
+<p>MOPAC 7.00 was written at the Frank J. Seiler Research Laboratory, United States
+Air Force Academy, and distributed through the Quantum Chemistry Program
+Exchange as QCPE program #688. It is the last open-source release of MOPAC:
+every later version is commercial, and today's
+<a href="https://github.com/openmopac/mopac">openmopac/mopac</a> is Apache-2.0. MOPAC 7
+carries its own notice of public-domain status under 17 U.S.C. § 105 and prints
+it on every run; it is reproduced verbatim in <a href="media/LICENSE">LICENSE</a> as that notice
+requires.</p>
+<p>MOPAC 7 also incorporates work by A. Klamt (COSMO solvation), David Danovich
+(Green's-function ionisation potentials), W. Thiel (a routine from QCPE 438,
+MNDOC), Peter L. Cummins, Daniel Liotard and S. Olivella, together with fifteen
+netlib LAPACK 1.0b and reference BLAS routines.</p>
+<p>Every build is checked against a native build of the same translated C on the
+same input. <code>node scripts/verify.mjs</code> runs 42 decks — 14 molecules × 3 methods —
+twice over, once through the WebAssembly module and once through
+<code>build/native/mopac7</code>, parses both with this package's own parser and compares
+every block it returns. Against <code>verification/reference-mopac7.json</code>, an
+independent MOPAC 7.01 (the Ghemical packaging), the worst difference over all
+306 occupied valence levels is 0.000000 eV. Against the native build of the very
+same C, the worst absolute difference is <strong>exactly zero</strong> for each of: the heat
+of formation, the ionisation potential, the total, electronic and core–core
+energies, every orbital energy, every Mulliken charge, every electron density,
+the dipole, the geometry, and every coefficient of a non-degenerate orbital.</p>
+<p>The listings themselves are not identical, and the claim is deliberately not that
+they are: for water at AM1 the two differ on 55 lines, all of them eigenvector
+rows whose columns carry the opposite sign, and 3 of the 6 molecular orbitals are
+affected with every magnitude equal. The phase convention removes that difference
+from the parsed result. What it cannot remove is the mixture inside a degenerate
+set, which <code>verify.mjs</code> prints as a note rather than a failure; see <a href="#what-it-does-not-do">What it does
+not do</a> for the consequence and for the one deck where it
+matters.</p>
+<p><code>wasm/BUILD.json</code> records the pins, the patches, the sizes and the digests, and
+<code>src/__tests__/wasmPayload.test.ts</code> hashes what the committed payload
+decompresses to on every test run.</p>
+<h2 id="license" class="tsd-anchor-link">License<a href="#license" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><code>MIT AND BSD-3-Clause AND HPND</code>. The TypeScript, the build scripts and the tests
+are MIT; MOPAC itself is public domain, taken from an archive under
+BSD-3-Clause; the bundled LAPACK and BLAS are BSD-3-Clause; libf2c carries the
+AT&amp;T / Lucent / Bellcore f2c notice. No copyright is claimed over any of them.
+See <a href="media/LICENSE">LICENSE</a> for the full notices.</p>
+<h2 id="how-to-cite" class="tsd-anchor-link">How to cite<a href="#how-to-cite" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Cite the program and the method you used, not this package. A wrapper is not a
+citable scientific contribution, and referees want the hamiltonian.</p>
+<p><strong>The program</strong></p>
+<blockquote>
+<p>Stewart, J. J. P. MOPAC: A semiempirical molecular orbital program.
+<em>J. Comput.-Aided Mol. Des.</em> <strong>1990</strong>, <em>4</em> (1), 1–103.
+<a href="https://doi.org/10.1007/BF00128336">doi:10.1007/BF00128336</a></p>
+</blockquote>
+<p>MOPAC 7.00 (1993), QCPE program #688.</p>
+<p><strong>The method</strong></p>
+<table>
+<thead>
+<tr>
+<th>keyword</th>
+<th>citation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MNDO</code></td>
+<td>Dewar, M. J. S.; Thiel, W. Ground states of molecules. 38. The MNDO method. Approximations and parameters. <em>J. Am. Chem. Soc.</em> <strong>1977</strong>, <em>99</em>, 4899–4907. <a href="https://doi.org/10.1021/ja00457a004">doi:10.1021/ja00457a004</a></td>
+</tr>
+<tr>
+<td><code>AM1</code></td>
+<td>Dewar, M. J. S.; Zoebisch, E. G.; Healy, E. F.; Stewart, J. J. P. Development and use of quantum mechanical molecular models. 76. AM1: a new general purpose quantum mechanical molecular model. <em>J. Am. Chem. Soc.</em> <strong>1985</strong>, <em>107</em>, 3902–3909. <a href="https://doi.org/10.1021/ja00299a024">doi:10.1021/ja00299a024</a></td>
+</tr>
+<tr>
+<td><code>PM3</code></td>
+<td>Stewart, J. J. P. Optimization of parameters for semiempirical methods. I. Method. <em>J. Comput. Chem.</em> <strong>1989</strong>, <em>10</em>, 209–220. <a href="https://doi.org/10.1002/jcc.540100208">doi:10.1002/jcc.540100208</a> — and II. Applications, <em>ibid.</em> 221–264.</td>
+</tr>
+<tr>
+<td><code>MINDO3</code></td>
+<td>Bingham, R. C.; Dewar, M. J. S.; Lo, D. H. Ground states of molecules. XXV. MINDO/3. <em>J. Am. Chem. Soc.</em> <strong>1975</strong>, <em>97</em>, 1285–1293 (and 1294, 1302, 1307). <a href="https://doi.org/10.1021/ja00839a001">doi:10.1021/ja00839a001</a></td>
+</tr>
+</tbody>
+</table>
+<p>MOPAC prints the parameter reference for <strong>every element</strong> in the run, and
+several elements were parameterised in later papers than the four above — MNDO
+aluminium credits L. P. Davis et al., MNDO chlorine credits Dewar and Rzepa, and
+AM1 lithium is &quot;TAKEN FROM MNDOC BY W. THIEL&quot;. Quote the lines your own output
+printed, not a static table.</p>
+<p>If you want to say where the binary came from, mention this package in the
+methods text (&quot;MOPAC 7.00 compiled to WebAssembly, <code>mopac7-wasm</code> vX.Y.Z&quot;) rather
+than in the bibliography.</p>
+<h2 id="rebuilding-the-webassembly" class="tsd-anchor-link">Rebuilding the WebAssembly<a href="#rebuilding-the-webassembly" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The binary is committed, because building it needs f2c built from source,
+emscripten, and a translation of 156 Fortran files — an hour of toolchain, not a
+postinstall step. To rebuild it:</p>
+<pre><code class="console"><span class="hl-0">npm run build-wasm            # -Os by default; --opt O3 for the fast build</span><br/><span class="hl-0">npm run verify-wasm           # 42 decks against the reference and the native build</span><br/><span class="hl-0">node scripts/bench.mjs        # cold init and per-deck timings</span>
+</code><button type="button">Copy</button></pre>
+
+<p><code>npm run verify-wasm</code> needs no build: when the raw linker output (<code>wasm/mopac7.mjs</code>,
+<code>wasm/mopac7.wasm</code>, both gitignored) is absent it runs the committed <code>wasm/glue.js</code>
+and embedded payload instead, which is what the published package runs. The
+wasm-against-native check needs <code>build/native/mopac7</code> and says so when it is
+missing.</p>
+<p><a href="media/BUILD.md">BUILD.md</a> documents the pipeline, the pins, the patches and the
+three silent failure modes the script turns into hard errors. <code>--native</code> also
+builds the same translated C with the host compiler, which is what the A/B check
+compares against.</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#mopac7-wasm"><span>mopac7-<wbr/>wasm</span></a><ul><li><a href="#why-it-exists"><span>Why it exists</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#usage"><span>Usage</span></a></li><li><ul><li><a href="#orbital-phases-are-pinned-and-the-listings-are-not-used"><span>Orbital phases are pinned, and the listing&#39;s are not used</span></a></li><li><a href="#bundlers-and-workers"><span>Bundlers and workers</span></a></li></ul></li><li><a href="#api"><span>API</span></a></li><li><a href="#what-it-does-not-do"><span>What it does not do</span></a></li><li><a href="#provenance"><span>Provenance</span></a></li><li><a href="#license"><span>License</span></a></li><li><a href="#how-to-cite"><span>How to cite</span></a></li><li><a href="#rebuilding-the-webassembly"><span>Rebuilding the <wbr/>Web<wbr/>Assembly</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">mopac7-wasm</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer></footer><div class="overlay"></div></body></html>

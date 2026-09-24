@@ -1,0 +1,185 @@
+mopac7-wasm is a combination of separately licensed works.
+
+  * The TypeScript sources, build scripts, tests and documentation written for
+    this package are under the MIT licence (below).
+  * MOPAC 7.00 (Fortran, and the C that f2c produced from it) is a work of the
+    United States Government in the public domain, obtained from
+    openmopac/MOPAC-archive under the BSD 3-Clause licence.
+  * The LAPACK and BLAS routines bundled in MOPAC 7 are netlib code under the
+    BSD 3-Clause licence.
+  * libf2c, linked into the WebAssembly module, is under the AT&T / Lucent /
+    Bellcore f2c notice.
+  * The Emscripten runtime glue and the musl-derived libc compiled into the
+    WebAssembly module are under the MIT licence.
+
+SPDX-License-Identifier: MIT AND BSD-3-Clause AND HPND
+
+No claim of copyright is made over MOPAC, LAPACK, BLAS, libf2c or Emscripten.
+The MIT grant below applies only to the code written for this package.
+
+================================================================================
+MIT License -- the code written for this package
+
+Copyright (c) 2026 cheminfo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+THIRD-PARTY COMPONENTS
+
+--------------------------------------------------------------------------------
+1. MOPAC 7.00 (1993), James J. P. Stewart -- public domain
+
+MOPAC 7.00 was written at the Frank J. Seiler Research Laboratory, United
+States Air Force Academy, and distributed through the Quantum Chemistry Program
+Exchange as QCPE program #688. Its own notice, carried in mopac.f and printed on
+every run, requires that it be reproduced on every reproduction, and is
+reproduced here verbatim:
+
+    Notice of Public Domain nature of MOPAC
+
+    'This computer program is a work of the United States Government and as
+     such is not subject to protection by copyright (17 U.S.C. # 105.)  Any
+     person who fraudulently places a copyright notice or does any other act
+     contrary to the provisions of 17 U.S. Code 506(c) shall be subject to the
+     penalties provided therein.  This notice shall not be altered or removed
+     from this software and is to be on all reproductions.'
+
+MOPAC 7 also incorporates contributions from A. Klamt (COSMO solvation),
+David Danovich (Green's-function ionisation potentials), W. Thiel (a routine
+from QCPE 438, MNDOC), Peter L. Cummins, Daniel Liotard and S. Olivella, all
+distributed as part of the public-domain program.
+
+--------------------------------------------------------------------------------
+2. openmopac/MOPAC-archive -- BSD 3-Clause
+
+The MOPAC 7.00 sources were obtained from
+https://github.com/openmopac/MOPAC-archive (directory 1993_MOPAC7).
+
+BSD 3-Clause License
+
+Copyright (c) 2021, Virginia Polytechnic Institute and State University
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+--------------------------------------------------------------------------------
+3. LAPACK and BLAS (netlib) -- BSD 3-Clause
+
+MOPAC 7 bundles fifteen netlib reference routines, which are compiled into the
+WebAssembly module: dgemm, dgemv, dger, dtrmm, dtrmv, dtrsm, lsame and xerbla
+(BLAS), and dgetf2, dgetrf, dgetri, dlaswp, dtrti2, dtrtri and ilaenv, each of
+which carries the header "LAPACK ROUTINE (VERSION 1.0B)" and a 1992 date. The
+bundled copies carry no licence header; netlib distributes LAPACK and the
+reference BLAS under the BSD 3-Clause licence
+(https://www.netlib.org/lapack/LICENSE.txt), with the three-clause text above
+and these copyright holders:
+
+Copyright (c) 1992-2013 The University of Tennessee and The University of
+                        Tennessee Research Foundation.  All rights reserved.
+Copyright (c) 2000-2013 The University of California Berkeley. All rights
+                        reserved.
+Copyright (c) 2006-2013 The University of Colorado Denver.  All rights
+                        reserved.
+
+--------------------------------------------------------------------------------
+4. f2c and libf2c (netlib) -- AT&T / Lucent / Bellcore notice
+
+The Fortran was translated to C with f2c, and libf2c is linked into the
+WebAssembly module. The notice shipped as libf2c/Notice and f2c/src/Notice,
+reproduced verbatim:
+
+/****************************************************************
+Copyright 1990 - 1997 by AT&T, Lucent Technologies and Bellcore.
+
+Permission to use, copy, modify, and distribute this software
+and its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appear in all
+copies and that both that the copyright notice and this
+permission notice and warranty disclaimer appear in supporting
+documentation, and that the names of AT&T, Bell Laboratories,
+Lucent or Bellcore or any of their entities not be used in
+advertising or publicity pertaining to distribution of the
+software without specific, written prior permission.
+
+AT&T, Lucent and Bellcore disclaim all warranties with regard to
+this software, including all implied warranties of
+merchantability and fitness.  In no event shall AT&T, Lucent or
+Bellcore be liable for any special, indirect or consequential
+damages or any damages whatsoever resulting from loss of use,
+data or profits, whether in an action of contract, negligence or
+other tortious action, arising out of or in connection with the
+use or performance of this software.
+****************************************************************/
+
+This licence has no exact SPDX identifier; it belongs to the HPND (Historical
+Permission Notice and Disclaimer) family, which is why HPND appears in the SPDX
+expression above.
+
+--------------------------------------------------------------------------------
+5. Emscripten and musl -- MIT
+
+The JavaScript glue and the libc compiled into the WebAssembly module come from
+Emscripten, which is available under the MIT licence and the University of
+Illinois/NCSA Open Source License; the MIT licence is elected here. Emscripten
+bundles musl libc, also MIT, and uses portions of Node.js source code under the
+MIT licence.
+
+Copyright (c) 2010-2014 Emscripten authors, see AUTHORS file.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
