@@ -1,0 +1,63 @@
+Subject: ef.f: stop using the non-standard FLUSH(unit) extension
+
+WHAT IT FIXES
+  ef.f both declares a COMMON block called FLUSH and calls a subroutine
+  called FLUSH, so f2c refuses the file outright:
+
+      Error on line 153 of ef.f: flush cannot be a subprogram:
+                                 it is a common block.
+
+  (f2c still exits 0 and still writes an ef.c, which is why the build
+  script greps its output for "Error on line" rather than trusting the
+  exit status.)
+
+  Both halves are also wrong for wasm on their own:
+
+  1. `call flush(6)` / `call flush(11)`. FLUSH(unit) is a Unix f77
+     extension, not Fortran 77, and libf2c's flush_() takes no argument.
+     wasm-ld does not merge a call whose signature differs from the
+     definition -- it links a TRAPPING STUB, and the module then dies at
+     run time with a bare `RuntimeError: unreachable` and no message.
+     Native linkers silently accept the mismatch.
+
+  2. `COMMON/FLUSH/NFLUSH` makes f2c emit a data symbol named `flush_`,
+     which collides with libf2c's flush_() function.
+
+  The block is renamed FLUSHX and the calls MYFLSH; patches/shim.c provides
+  `myflsh_`. NFLUSH is never assigned anywhere in MOPAC 7 (it appears only
+  in this file), so it is always 0 from the zero-initialised COMMON and the
+  calls are in fact unreachable -- but they still have to translate and link.
+
+--- a/ef.f
++++ b/ef.f
+@@ -50,7 +50,7 @@
+      $U(MAXPAR,MAXPAR),DD,rmin,rmax,omin,xlamd,xlamd0,skal,
+      $MODE,NSTEP,NEGREQ,IPRNT
+       COMMON/THREADS/NUM_THREADS
+-      COMMON/FLUSH/NFLUSH
++      COMMON/FLUSHX/NFLUSH
+ 
+       DIMENSION IPOW(9), EIGVAL(MAXPAR),TVEC(MAXPAR),SVEC(MAXPAR),
+      1FX(MAXPAR),HESSC(MAXHES),UC(MAXPAR**2),oldfx(maxpar),
+@@ -150,8 +150,8 @@
+      1' GRAD.:',F10.3,' HEAT:',G13.7)
+             IF ( NFLUSH.NE.0 ) THEN
+                IF ( MOD(NSTEP+1,NFLUSH).EQ.0) THEN
+-                  call flush(6)
+-                  call flush(11)
++                  call myflsh(6)
++                  call myflsh(11)
+                ENDIF
+             ENDIF
+          ELSE
+@@ -163,8 +163,8 @@
+      1' GRAD.:',F10.3,' HEAT:',G13.7)
+             IF ( NFLUSH.NE.0 ) THEN
+                IF ( MOD(NSTEP+1,NFLUSH).EQ.0) THEN
+-                  call flush(6)
+-                  call flush(11)
++                  call myflsh(6)
++                  call myflsh(11)
+                ENDIF
+             ENDIF
+          ENDIF

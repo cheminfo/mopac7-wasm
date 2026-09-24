@@ -1,0 +1,1136 @@
+{
+ "what": "Reference occupied-orbital energies, heats of formation and ionisation potentials for the 42 decks in verification/decks, used by scripts/verify.mjs.",
+ "provenance": {
+  "producedBy": "energy-eval/mopac/scripts/mopac7.mjs --wasm (September 2026)",
+  "mopacVersion": "7.01",
+  "mopacSource": "the Ghemical packaging of MOPAC 7.01 (mopac7-1.15.tar.gz, Fedora lookaside md5 7e509fd03154b37cc682593365c233f4), translated with the same f2c and compiled with the same emscripten",
+  "caveat": "This repository builds MOPAC 7.00 from openmopac/MOPAC-archive, a DIFFERENT release of MOPAC 7 from the one that produced these numbers. Differences of order 1e-3 eV are expected and are the 7.00-vs-7.01 delta, not a wasm defect. The bit-level wasm check is the wasm-against-native A/B in scripts/verify.mjs, which runs the identical f2c output on both targets.",
+  "printingResolution": "MOPAC 7 prints eigenvalues to 3 decimals, so 0.0005 eV is the floor of any comparison and ~0.0017 eV is the resolution of a rounded difference.",
+  "geometries": "cheminfo lcao photoelectron reference set, 14 molecules; the decks carry the geometry verbatim.",
+  "keywords": "<METHOD> 1SCF XYZ VECTORS ALLVEC DEBUG PRECISE GEO-OK CHARGE=0 -- ALLVEC needs DEBUG because wrtkey.f calls ALLVEC unknown while matou1.f honours it; without both, MOPAC prints only a window of roots around the HOMO."
+ },
+ "methods": {
+  "MNDO": {
+   "methane": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -11.65826,
+    "ionizationPotentialEv": 13.93674,
+    "basisSize": 8,
+    "occupiedCount": 4,
+    "pointGroup": "TD",
+    "symmetryLabels": [
+     "1A1",
+     "1T2",
+     "1T2",
+     "1T2"
+    ],
+    "occupiedEnergiesEv": [
+     -30.859,
+     -13.937,
+     -13.937,
+     -13.937
+    ]
+   },
+   "ammonia": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -6.07698,
+    "ionizationPotentialEv": 11.1099,
+    "basisSize": 7,
+    "occupiedCount": 4,
+    "pointGroup": "C3V",
+    "symmetryLabels": [
+     "1A1",
+     "1E",
+     "1E",
+     "2A1"
+    ],
+    "occupiedEnergiesEv": [
+     -32.697,
+     -16.638,
+     -16.638,
+     -11.11
+    ]
+   },
+   "water": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -60.00702,
+    "ionizationPotentialEv": 12.17985,
+    "basisSize": 6,
+    "occupiedCount": 4,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "1B2",
+     "2A1",
+     "1B1"
+    ],
+    "occupiedEnergiesEv": [
+     -39.585,
+     -18.653,
+     -14.581,
+     -12.18
+    ]
+   },
+   "hydrogen-fluoride": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -58.29235,
+    "ionizationPotentialEv": 14.89716,
+    "basisSize": 5,
+    "occupiedCount": 4,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "1PI",
+     "1PI"
+    ],
+    "occupiedEnergiesEv": [
+     -43.827,
+     -17.952,
+     -14.897,
+     -14.897
+    ]
+   },
+   "dinitrogen": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 8.36048,
+    "ionizationPotentialEv": 14.86118,
+    "basisSize": 8,
+    "occupiedCount": 5,
+    "pointGroup": "D*H",
+    "symmetryLabels": [
+     "1SIG",
+     "1SIU",
+     "1PIU",
+     "1PIU",
+     "2SIG"
+    ],
+    "occupiedEnergiesEv": [
+     -42.093,
+     -21.031,
+     -16.289,
+     -16.289,
+     -14.861
+    ]
+   },
+   "carbon-monoxide": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -3.76543,
+    "ionizationPotentialEv": 13.32125,
+    "basisSize": 8,
+    "occupiedCount": 5,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "1PI",
+     "1PI",
+     "3SI"
+    ],
+    "occupiedEnergiesEv": [
+     -45.982,
+     -21.003,
+     -16.244,
+     -16.244,
+     -13.321
+    ]
+   },
+   "ethyne": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 58.13381,
+    "ionizationPotentialEv": 10.934,
+    "basisSize": 10,
+    "occupiedCount": 5,
+    "pointGroup": "D*H",
+    "symmetryLabels": [
+     "1SIG",
+     "1SIU",
+     "2SIG",
+     "1PIU",
+     "1PIU"
+    ],
+    "occupiedEnergiesEv": [
+     -34.964,
+     -20.902,
+     -15.802,
+     -10.934,
+     -10.934
+    ]
+   },
+   "ethene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 15.99546,
+    "ionizationPotentialEv": 10.16279,
+    "basisSize": 12,
+    "occupiedCount": 6,
+    "pointGroup": "D2H",
+    "symmetryLabels": [
+     "1AG",
+     "1B1U",
+     "1B2U",
+     "2AG",
+     "1B3G",
+     "1B3U"
+    ],
+    "occupiedEnergiesEv": [
+     -35.412,
+     -22.531,
+     -16.037,
+     -14.405,
+     -12.775,
+     -10.163
+    ]
+   },
+   "formaldehyde": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -32.70813,
+    "ionizationPotentialEv": 11.0573,
+    "basisSize": 10,
+    "occupiedCount": 6,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "2A1",
+     "1B2",
+     "3A1",
+     "1B1",
+     "2B2"
+    ],
+    "occupiedEnergiesEv": [
+     -42.777,
+     -25.144,
+     -16.974,
+     -16.22,
+     -14.058,
+     -11.057
+    ]
+   },
+   "hydrogen-cyanide": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 35.39193,
+    "ionizationPotentialEv": 13.44827,
+    "basisSize": 9,
+    "occupiedCount": 5,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "3SI",
+     "1PI",
+     "1PI"
+    ],
+    "occupiedEnergiesEv": [
+     -37.722,
+     -21.547,
+     -14.242,
+     -13.448,
+     -13.448
+    ]
+   },
+   "benzene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 22.0562,
+    "ionizationPotentialEv": 9.46872,
+    "basisSize": 30,
+    "occupiedCount": 15,
+    "pointGroup": "D6H",
+    "symmetryLabels": [
+     "1A1G",
+     "1E1U",
+     "1E1U",
+     "1E2G",
+     "1E2G",
+     "2A1G",
+     "1B2U",
+     "1B1U",
+     "2E1U",
+     "2E1U",
+     "1A2U",
+     "2E2G",
+     "2E2G",
+     "1E1G",
+     "1E1G"
+    ],
+    "occupiedEnergiesEv": [
+     -42.74,
+     -33.174,
+     -33.174,
+     -23.345,
+     -23.345,
+     -17.649,
+     -16.74,
+     -15.304,
+     -14.496,
+     -14.496,
+     -12.758,
+     -12.495,
+     -12.495,
+     -9.469,
+     -9.469
+    ]
+   },
+   "pyridine": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 30.42799,
+    "ionizationPotentialEv": 9.8614,
+    "basisSize": 29,
+    "occupiedCount": 15,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "2A1",
+     "1B2",
+     "3A1",
+     "2B2",
+     "4A1",
+     "5A1",
+     "3B2",
+     "4B2",
+     "6A1",
+     "1B1",
+     "5B2",
+     "7A1",
+     "2B1",
+     "1A2"
+    ],
+    "occupiedEnergiesEv": [
+     -43.188,
+     -34.304,
+     -33.584,
+     -24.408,
+     -24.338,
+     -17.97,
+     -17.033,
+     -16.803,
+     -14.847,
+     -14.257,
+     -13.947,
+     -13.14,
+     -11.04,
+     -10.582,
+     -9.861
+    ]
+   },
+   "furan": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -7.37655,
+    "ionizationPotentialEv": 9.19289,
+    "basisSize": 24,
+    "occupiedCount": 13,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "2A1",
+     "1B2",
+     "2B2",
+     "3A1",
+     "4A1",
+     "3B2",
+     "1B1",
+     "5A1",
+     "4B2",
+     "6A1",
+     "2B1",
+     "1A2"
+    ],
+    "occupiedEnergiesEv": [
+     -47.144,
+     -35.362,
+     -30.699,
+     -22.272,
+     -22.03,
+     -18.308,
+     -15.882,
+     -15.676,
+     -14.097,
+     -14.073,
+     -13.563,
+     -10.462,
+     -9.193
+    ]
+   },
+   "butadiene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 30.54969,
+    "ionizationPotentialEv": 9.11991,
+    "basisSize": 22,
+    "occupiedCount": 11,
+    "pointGroup": "C2H",
+    "symmetryLabels": [
+     "1AG",
+     "1BU",
+     "2AG",
+     "2BU",
+     "3BU",
+     "3AG",
+     "4AG",
+     "4BU",
+     "5AG",
+     "1AU",
+     "1BG"
+    ],
+    "occupiedEnergiesEv": [
+     -39.018,
+     -32.79,
+     -23.836,
+     -20.445,
+     -15.919,
+     -15.845,
+     -13.662,
+     -13.633,
+     -12.454,
+     -11.56,
+     -9.12
+    ]
+   }
+  },
+  "AM1": {
+   "methane": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -8.09122,
+    "ionizationPotentialEv": 13.4092,
+    "basisSize": 8,
+    "occupiedCount": 4,
+    "pointGroup": "TD",
+    "symmetryLabels": [
+     "1A1",
+     "1T2",
+     "1T2",
+     "1T2"
+    ],
+    "occupiedEnergiesEv": [
+     -29.264,
+     -13.409,
+     -13.409,
+     -13.409
+    ]
+   },
+   "ammonia": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -6.50916,
+    "ionizationPotentialEv": 10.67579,
+    "basisSize": 7,
+    "occupiedCount": 4,
+    "pointGroup": "C3V",
+    "symmetryLabels": [
+     "1A1",
+     "1E",
+     "1E",
+     "2A1"
+    ],
+    "occupiedEnergiesEv": [
+     -32.476,
+     -15.676,
+     -15.676,
+     -10.676
+    ]
+   },
+   "water": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -59.17072,
+    "ionizationPotentialEv": 12.44576,
+    "basisSize": 6,
+    "occupiedCount": 4,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "1B2",
+     "2A1",
+     "1B1"
+    ],
+    "occupiedEnergiesEv": [
+     -36.288,
+     -18.143,
+     -14.906,
+     -12.446
+    ]
+   },
+   "hydrogen-fluoride": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -68.91953,
+    "ionizationPotentialEv": 13.98729,
+    "basisSize": 5,
+    "occupiedCount": 4,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "3\u0000\u0000\u0000\u0000",
+     "4\u0000\u0000\u0000\u0000"
+    ],
+    "occupiedEnergiesEv": [
+     -48.173,
+     -17.1,
+     -13.987,
+     -13.987
+    ]
+   },
+   "dinitrogen": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 11.30861,
+    "ionizationPotentialEv": 14.29531,
+    "basisSize": 8,
+    "occupiedCount": 5,
+    "pointGroup": "D*H",
+    "symmetryLabels": [
+     "1SIG",
+     "1SIU",
+     "1PIU",
+     "1PIU",
+     "2SIG"
+    ],
+    "occupiedEnergiesEv": [
+     -41.635,
+     -21.397,
+     -16.307,
+     -16.307,
+     -14.295
+    ]
+   },
+   "carbon-monoxide": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -2.74082,
+    "ionizationPotentialEv": 13.12052,
+    "basisSize": 8,
+    "occupiedCount": 5,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "1PI",
+     "1PI",
+     "3SI"
+    ],
+    "occupiedEnergiesEv": [
+     -42.41,
+     -22.095,
+     -16.899,
+     -16.899,
+     -13.121
+    ]
+   },
+   "ethyne": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 54.87725,
+    "ionizationPotentialEv": 11.4387,
+    "basisSize": 10,
+    "occupiedCount": 5,
+    "pointGroup": "D*H",
+    "symmetryLabels": [
+     "1SIG",
+     "1SIU",
+     "2SIG",
+     "1PIU",
+     "1PIU"
+    ],
+    "occupiedEnergiesEv": [
+     -32.895,
+     -20.634,
+     -15.444,
+     -11.439,
+     -11.439
+    ]
+   },
+   "ethene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 17.05135,
+    "ionizationPotentialEv": 10.50334,
+    "basisSize": 12,
+    "occupiedCount": 6,
+    "pointGroup": "D2H",
+    "symmetryLabels": [
+     "1AG",
+     "1B1U",
+     "1B2U",
+     "2AG",
+     "1B3G",
+     "1B3U"
+    ],
+    "occupiedEnergiesEv": [
+     -33.225,
+     -21.933,
+     -15.977,
+     -14.181,
+     -12.004,
+     -10.503
+    ]
+   },
+   "formaldehyde": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -31.41249,
+    "ionizationPotentialEv": 10.79356,
+    "basisSize": 10,
+    "occupiedCount": 6,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "2A1",
+     "1B2",
+     "3A1",
+     "1B1",
+     "2B2"
+    ],
+    "occupiedEnergiesEv": [
+     -39.152,
+     -25.132,
+     -17.196,
+     -16.281,
+     -14.582,
+     -10.794
+    ]
+   },
+   "hydrogen-cyanide": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 31.04794,
+    "ionizationPotentialEv": 13.72705,
+    "basisSize": 9,
+    "occupiedCount": 5,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "3SI",
+     "1PI",
+     "1PI"
+    ],
+    "occupiedEnergiesEv": [
+     -36.722,
+     -21.377,
+     -13.984,
+     -13.727,
+     -13.727
+    ]
+   },
+   "benzene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 22.44044,
+    "ionizationPotentialEv": 9.66942,
+    "basisSize": 30,
+    "occupiedCount": 15,
+    "pointGroup": "D6H",
+    "symmetryLabels": [
+     "1A1G",
+     "1E1U",
+     "1E1U",
+     "1E2G",
+     "1E2G",
+     "2A1G",
+     "1B2U",
+     "1B1U",
+     "2E1U",
+     "2E1U",
+     "1A2U",
+     "2E2G",
+     "2E2G",
+     "1E1G",
+     "1E1G"
+    ],
+    "occupiedEnergiesEv": [
+     -39.231,
+     -31.459,
+     -31.459,
+     -23.14,
+     -23.14,
+     -17.936,
+     -16.224,
+     -15.419,
+     -14.21,
+     -14.21,
+     -13.399,
+     -11.929,
+     -11.929,
+     -9.669,
+     -9.669
+    ]
+   },
+   "pyridine": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 33.36805,
+    "ionizationPotentialEv": 10.08685,
+    "basisSize": 29,
+    "occupiedCount": 15,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "2A1",
+     "1B2",
+     "3A1",
+     "2B2",
+     "4A1",
+     "3B2",
+     "5A1",
+     "4B2",
+     "1B1",
+     "6A1",
+     "5B2",
+     "7A1",
+     "2B1",
+     "1A2"
+    ],
+    "occupiedEnergiesEv": [
+     -40.27,
+     -33.184,
+     -31.855,
+     -24.319,
+     -24.073,
+     -18.138,
+     -16.764,
+     -16.648,
+     -14.576,
+     -14.458,
+     -13.946,
+     -12.553,
+     -10.723,
+     -10.723,
+     -10.087
+    ]
+   },
+   "furan": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 5.88083,
+    "ionizationPotentialEv": 9.30868,
+    "basisSize": 24,
+    "occupiedCount": 13,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "2A1",
+     "1B2",
+     "2B2",
+     "3A1",
+     "4A1",
+     "1B1",
+     "3B2",
+     "5A1",
+     "4B2",
+     "6A1",
+     "2B1",
+     "1A2"
+    ],
+    "occupiedEnergiesEv": [
+     -42.657,
+     -33.665,
+     -29.721,
+     -22.41,
+     -22.204,
+     -18.629,
+     -16.436,
+     -15.39,
+     -13.884,
+     -13.683,
+     -13.577,
+     -10.734,
+     -9.309
+    ]
+   },
+   "butadiene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 30.71395,
+    "ionizationPotentialEv": 9.30726,
+    "basisSize": 22,
+    "occupiedCount": 11,
+    "pointGroup": "C2H",
+    "symmetryLabels": [
+     "1AG",
+     "1BU",
+     "2AG",
+     "2BU",
+     "3BU",
+     "3AG",
+     "4AG",
+     "4BU",
+     "1AU",
+     "5AG",
+     "1BG"
+    ],
+    "occupiedEnergiesEv": [
+     -36.181,
+     -31.207,
+     -23.25,
+     -20.291,
+     -15.909,
+     -15.781,
+     -13.328,
+     -13.007,
+     -12.075,
+     -11.831,
+     -9.307
+    ]
+   }
+  },
+  "PM3": {
+   "methane": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -12.96471,
+    "ionizationPotentialEv": 13.6199,
+    "basisSize": 8,
+    "occupiedCount": 4,
+    "pointGroup": "TD",
+    "symmetryLabels": [
+     "1A1",
+     "1T2",
+     "1T2",
+     "1T2"
+    ],
+    "occupiedEnergiesEv": [
+     -29.788,
+     -13.62,
+     -13.62,
+     -13.62
+    ]
+   },
+   "ammonia": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -2.38371,
+    "ionizationPotentialEv": 9.86077,
+    "basisSize": 7,
+    "occupiedCount": 4,
+    "pointGroup": "C3V",
+    "symmetryLabels": [
+     "1A1",
+     "1E",
+     "1E",
+     "2A1"
+    ],
+    "occupiedEnergiesEv": [
+     -28.532,
+     -14.969,
+     -14.969,
+     -9.861
+    ]
+   },
+   "water": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -52.89956,
+    "ionizationPotentialEv": 12.32747,
+    "basisSize": 6,
+    "occupiedCount": 4,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "1B2",
+     "2A1",
+     "1B1"
+    ],
+    "occupiedEnergiesEv": [
+     -36.517,
+     -17.307,
+     -14.691,
+     -12.327
+    ]
+   },
+   "hydrogen-fluoride": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -62.39468,
+    "ionizationPotentialEv": 16.20168,
+    "basisSize": 5,
+    "occupiedCount": 4,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "1PI",
+     "1PI"
+    ],
+    "occupiedEnergiesEv": [
+     -23.802,
+     -17.125,
+     -16.202,
+     -16.202
+    ]
+   },
+   "dinitrogen": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 17.56619,
+    "ionizationPotentialEv": 13.80391,
+    "basisSize": 8,
+    "occupiedCount": 5,
+    "pointGroup": "D*H",
+    "symmetryLabels": [
+     "1SIG",
+     "1PIU",
+     "1PIU",
+     "1SIU",
+     "2SIG"
+    ],
+    "occupiedEnergiesEv": [
+     -32.512,
+     -15.493,
+     -15.493,
+     -15.272,
+     -13.804
+    ]
+   },
+   "carbon-monoxide": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -19.67792,
+    "ionizationPotentialEv": 13.01076,
+    "basisSize": 8,
+    "occupiedCount": 5,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "1PI",
+     "1PI",
+     "3SI"
+    ],
+    "occupiedEnergiesEv": [
+     -40.205,
+     -20.689,
+     -16.236,
+     -16.236,
+     -13.011
+    ]
+   },
+   "ethyne": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 50.92257,
+    "ionizationPotentialEv": 11.50509,
+    "basisSize": 10,
+    "occupiedCount": 5,
+    "pointGroup": "D*H",
+    "symmetryLabels": [
+     "1SIG",
+     "1SIU",
+     "2SIG",
+     "1PIU",
+     "1PIU"
+    ],
+    "occupiedEnergiesEv": [
+     -31.283,
+     -19.593,
+     -16.541,
+     -11.505,
+     -11.505
+    ]
+   },
+   "ethene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 17.15749,
+    "ionizationPotentialEv": 10.54905,
+    "basisSize": 12,
+    "occupiedCount": 6,
+    "pointGroup": "D2H",
+    "symmetryLabels": [
+     "1AG",
+     "1B1U",
+     "1B2U",
+     "2AG",
+     "1B3G",
+     "1B3U"
+    ],
+    "occupiedEnergiesEv": [
+     -32.888,
+     -20.857,
+     -16.284,
+     -15.005,
+     -12.088,
+     -10.549
+    ]
+   },
+   "formaldehyde": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -33.38543,
+    "ionizationPotentialEv": 10.67669,
+    "basisSize": 10,
+    "occupiedCount": 6,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "2A1",
+     "1B2",
+     "3A1",
+     "1B1",
+     "2B2"
+    ],
+    "occupiedEnergiesEv": [
+     -37.547,
+     -24.213,
+     -16.909,
+     -16.368,
+     -14.076,
+     -10.677
+    ]
+   },
+   "hydrogen-cyanide": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 32.96954,
+    "ionizationPotentialEv": 12.60611,
+    "basisSize": 9,
+    "occupiedCount": 5,
+    "pointGroup": "C*V",
+    "symmetryLabels": [
+     "1SI",
+     "2SI",
+     "1PI",
+     "1PI",
+     "3SI"
+    ],
+    "occupiedEnergiesEv": [
+     -31.285,
+     -19.856,
+     -13.293,
+     -13.293,
+     -12.606
+    ]
+   },
+   "benzene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 23.66029,
+    "ionizationPotentialEv": 9.73327,
+    "basisSize": 30,
+    "occupiedCount": 15,
+    "pointGroup": "D6H",
+    "symmetryLabels": [
+     "1A1G",
+     "1E1U",
+     "1E1U",
+     "1E2G",
+     "1E2G",
+     "2A1G",
+     "1B1U",
+     "1B2U",
+     "2E1U",
+     "2E1U",
+     "1A2U",
+     "2E2G",
+     "2E2G",
+     "1E1G",
+     "1E1G"
+    ],
+    "occupiedEnergiesEv": [
+     -39.339,
+     -29.595,
+     -29.595,
+     -21.439,
+     -21.439,
+     -18.505,
+     -16.261,
+     -15.225,
+     -14.649,
+     -14.649,
+     -13.192,
+     -12.4,
+     -12.4,
+     -9.733,
+     -9.733
+    ]
+   },
+   "pyridine": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 31.27814,
+    "ionizationPotentialEv": 10.18137,
+    "basisSize": 29,
+    "occupiedCount": 15,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "1B2",
+     "2A1",
+     "2B2",
+     "3A1",
+     "4A1",
+     "3B2",
+     "5A1",
+     "4B2",
+     "1B1",
+     "6A1",
+     "5B2",
+     "2B1",
+     "7A1",
+     "1A2"
+    ],
+    "occupiedEnergiesEv": [
+     -39.136,
+     -29.903,
+     -29.243,
+     -22.135,
+     -21.81,
+     -18.475,
+     -17.283,
+     -15.688,
+     -15.012,
+     -13.982,
+     -13.977,
+     -12.897,
+     -10.585,
+     -10.335,
+     -10.181
+    ]
+   },
+   "furan": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": -3.13701,
+    "ionizationPotentialEv": 9.33195,
+    "basisSize": 24,
+    "occupiedCount": 13,
+    "pointGroup": "C2V",
+    "symmetryLabels": [
+     "1A1",
+     "2A1",
+     "1B2",
+     "2B2",
+     "3A1",
+     "4A1",
+     "1B1",
+     "3B2",
+     "5A1",
+     "6A1",
+     "4B2",
+     "2B1",
+     "1A2"
+    ],
+    "occupiedEnergiesEv": [
+     -41.623,
+     -32.012,
+     -27.871,
+     -21.19,
+     -20.844,
+     -19.171,
+     -15.878,
+     -15.039,
+     -14.25,
+     -14.089,
+     -14.059,
+     -10.686,
+     -9.332
+    ]
+   },
+   "butadiene": {
+    "mopacVersion": "7.01",
+    "heatOfFormationKcal": 31.56974,
+    "ionizationPotentialEv": 9.39736,
+    "basisSize": 22,
+    "occupiedCount": 11,
+    "pointGroup": "C2H",
+    "symmetryLabels": [
+     "1AG",
+     "1BU",
+     "2AG",
+     "2BU",
+     "3BU",
+     "3AG",
+     "4AG",
+     "4BU",
+     "5AG",
+     "1AU",
+     "1BG"
+    ],
+    "occupiedEnergiesEv": [
+     -36.169,
+     -29.71,
+     -21.673,
+     -19.619,
+     -16.391,
+     -16.165,
+     -14.037,
+     -13.12,
+     -12.091,
+     -12.006,
+     -9.397
+    ]
+   }
+  }
+ }
+}

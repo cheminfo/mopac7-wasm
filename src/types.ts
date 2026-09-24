@@ -1,0 +1,195 @@
+/** The NDDO (or, for `MINDO3`, INDO) hamiltonian MOPAC 7 should use. */
+export type Mopac7Method = 'MNDO' | 'MINDO3' | 'AM1' | 'PM3';
+
+/** Spin state, written into the deck as MOPAC's own `SINGLET` … `SEXTET` keyword. */
+export type Mopac7Spin =
+  'singlet' | 'doublet' | 'triplet' | 'quartet' | 'quintet' | 'sextet';
+
+/** What went wrong, for `Mopac7Error.code`. */
+export type Mopac7ErrorCode =
+  /** The options are wrong before MOPAC is even started: unknown element, bad coordinate count, over the built-in size limit. */
+  | 'input'
+  /** MOPAC printed `UNRECOGNIZED KEY-WORDS`. */
+  | 'keywords'
+  /** MOPAC rejected the geometry (`GEOMETRY IS FAULTY`, collinear first three atoms, …). */
+  | 'geometry'
+  /** The hamiltonian has no parameters for one of the elements. */
+  | 'parameters'
+  /** The SCF did not converge. */
+  | 'scf'
+  /** The WebAssembly module trapped, or `main` threw. */
+  | 'aborted'
+  /** The run finished but the listing lacks a block the result needs. */
+  | 'parse';
+
+/** A molecule and the calculation to run on it. */
+export interface Mopac7Options {
+  /** Element symbols, one per atom, e.g. `['O', 'H', 'H']`. Case-insensitive. */
+  elements: readonly string[];
+  /**
+   * Cartesian coordinates in ångström, in `elements` order: either one
+   * `[x, y, z]` per atom, or a flat sequence of `3 * elements.length` numbers.
+   */
+  coordinates: readonly number[] | readonly number[][] | Float64Array;
+  /**
+   * The hamiltonian.
+   * @default 'AM1'
+   */
+  method?: Mopac7Method;
+  /**
+   * Net charge on the system.
+   * @default 0
+   */
+  charge?: number;
+  /**
+   * Spin state. Anything but `'singlet'` writes MOPAC's multiplicity keyword,
+   * and MOPAC 7 then runs its RHF half-electron treatment. There is no
+   * unrestricted option: `'UHF'` in {@link Mopac7Options.keywords} is refused,
+   * because its listing has separate alpha and beta eigenvectors and
+   * {@link Mopac7Result} holds one set.
+   * @default 'singlet'
+   */
+  spin?: Mopac7Spin;
+  /**
+   * Optimise the geometry instead of running a single point. When `false` the
+   * deck carries `1SCF`.
+   * @default false
+   */
+  optimize?: boolean;
+  /**
+   * Print every molecular orbital instead of a window around the HOMO. Adds
+   * `ALLVEC DEBUG`, which is what makes {@link Mopac7Result.coefficients}
+   * complete, at the cost of a much longer listing.
+   * @default true
+   */
+  allOrbitals?: boolean;
+  /**
+   * Tighten MOPAC's SCF and gradient criteria (`PRECISE`).
+   * @default true
+   */
+  precise?: boolean;
+  /**
+   * Extra MOPAC keywords, appended to the first line of the deck, one array
+   * entry per keyword. Each is checked first: whitespace, `+`, `SETUP` and
+   * `UHF` are refused with `code: 'input'`, because they would shift the deck's
+   * own lines or produce a listing this package cannot read.
+   * @default []
+   */
+  keywords?: readonly string[];
+  /**
+   * The second line of the deck, which MOPAC echoes back in the listing.
+   * @default 'mopac7-wasm'
+   */
+  title?: string;
+}
+
+/** One molecular orbital, as MOPAC printed it. */
+export interface Mopac7Orbital {
+  /** 0-based position in ascending energy. */
+  index: number;
+  /** Orbital energy in eV. MOPAC prints three decimals. */
+  energy: number;
+  /** `2` for a doubly occupied level, `0` for a virtual one. */
+  occupancy: number;
+  /** The symmetry label MOPAC printed above the root, e.g. `'1B1'`, or `null` when it printed none. */
+  symmetry: string | null;
+}
+
+/** One atomic orbital: a row of {@link Mopac7Result.coefficients}. */
+export interface Mopac7AtomicOrbital {
+  /** 0-based index into {@link Mopac7Result.elements} and `coordinates`. */
+  atomIndex: number;
+  /** The element symbol MOPAC printed for that atom. */
+  element: string;
+  /** MOPAC's own orbital label: `'S'`, `'Px'`, `'Py'`, `'Pz'`, `'Dx2'`, `'Dxz'`, `'Dz2'`, `'Dyz'` or `'Dxy'`. */
+  type: string;
+}
+
+/** The dipole moment in debye, as MOPAC's `SUM` row reports it. */
+export interface Mopac7Dipole {
+  x: number;
+  y: number;
+  z: number;
+  total: number;
+}
+
+/** Everything the parser reads out of one MOPAC 7 listing. */
+export interface Mopac7Result {
+  /** MOPAC's own version string, read from the banner, e.g. `'7.00'`. */
+  version: string;
+  /** `true` when the listing carries `SCF FIELD WAS ACHIEVED`. */
+  converged: boolean;
+  /** MOPAC's geometry verdict, e.g. `'1SCF WAS SPECIFIED, SO BFGS WAS NOT USED'`, or `null`. */
+  terminationMessage: string | null;
+
+  /** Final heat of formation in kcal/mol. */
+  heatOfFormation: number;
+  /** Total energy in eV. */
+  totalEnergy: number;
+  /** Electronic energy in eV. */
+  electronicEnergy: number;
+  /** Core–core repulsion in eV. */
+  coreCoreRepulsion: number;
+  /** Koopmans ionisation potential in eV, which is MOPAC's negated HOMO energy. */
+  ionizationPotential: number;
+  /** Molecular weight, as MOPAC computes it. */
+  molecularWeight: number;
+  /** MOPAC's `NO. OF FILLED LEVELS`: the number of doubly occupied orbitals. */
+  filledLevels: number;
+  /** The molecular point group MOPAC assigned, e.g. `'D6H'`, or `null`. */
+  pointGroup: string | null;
+
+  /** One entry per printed molecular orbital, in ascending energy. */
+  orbitals: Mopac7Orbital[];
+  /** The atomic orbital basis, in the row order of `coefficients`. */
+  basis: Mopac7AtomicOrbital[];
+  /**
+   * MO coefficients, orbital-major: the coefficient of atomic orbital `ao` in
+   * molecular orbital `mo` is `coefficients[mo * basis.length + ao]`. MOPAC
+   * prints four decimals, and the vectors are orthonormal in the ZDO sense.
+   *
+   * The phases are this package's, not the listing's. An eigenvector is only
+   * defined up to its sign, and two builds of the same MOPAC print different
+   * signs for the same orbital, so every column is turned so that **its
+   * largest-magnitude coefficient is positive** — ties broken by the earliest
+   * atomic orbital. A phase read from here is therefore stable across builds,
+   * which is what colouring an orbital lobe by phase needs.
+   */
+  coefficients: Float64Array;
+
+  /** Mulliken net atomic charge per atom. */
+  charges: Float64Array;
+  /** Total electron density per atom, as MOPAC prints it beside the charges. */
+  electronDensities: Float64Array;
+  /** The dipole moment, or `null` when MOPAC printed no dipole block. */
+  dipole: Mopac7Dipole | null;
+
+  /**
+   * Element symbols in MOPAC's own atom order, with dummy atoms removed. This
+   * is the order `basis`, `charges` and `coordinates` use.
+   */
+  elements: string[];
+  /**
+   * MOPAC's own Cartesian coordinates in ångström, flat, three per atom.
+   * MOPAC rebuilds the geometry through internal coordinates, so this frame is
+   * not the one that was handed in.
+   */
+  coordinates: Float64Array;
+
+  /** MOPAC's self-reported `COMPUTATION TIME` in seconds. Always `0` here: the wasm build has no working CPU clock. */
+  computationTimeSeconds: number;
+  /** Keywords MOPAC did not recognise and let through because `DEBUG` was set. */
+  unknownKeywords: string[];
+}
+
+/** One raw MOPAC run: the deck that went in and the listing that came out. */
+export interface Mopac7Job {
+  /** The `.dat` deck that was written to the module's filesystem. */
+  input: string;
+  /** The listing MOPAC produced, verbatim. */
+  listing: string;
+  /** Lines MOPAC wrote to stderr. `symtrz.f` prints debug noise here. */
+  diagnostics: string;
+  /** What `main` returned, or `null` when it threw. */
+  exitCode: number | null;
+}

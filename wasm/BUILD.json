@@ -1,0 +1,130 @@
+{
+  "name": "mopac7-wasm",
+  "builtAt": "2026-09-24T12:58:46.385Z",
+  "program": {
+    "name": "MOPAC",
+    "version": "7.00",
+    "year": 1993,
+    "author": "J. J. P. Stewart",
+    "distribution": "QCPE #688",
+    "methods": [
+      "MNDO",
+      "MINDO3",
+      "AM1",
+      "PM3"
+    ],
+    "license": "public domain (mopac.f: \"a work of the United States Government and as such is not subject to protection by copyright\", 17 U.S.C. 105); the openmopac/MOPAC-archive collection around it is BSD-3-Clause"
+  },
+  "source": {
+    "repository": "https://github.com/openmopac/MOPAC-archive",
+    "commit": "ed31531485fde27106e8e700fc8461b514923929",
+    "subdirectory": "1993_MOPAC7",
+    "treeSha256": "edaa50a6f0f581ea67241056f66c09e0919a6a922bacb4f57462d8ebdf55ee4c"
+  },
+  "toolchain": {
+    "translator": "f2c 20240504",
+    "translatorRepository": "https://github.com/barak/f2c",
+    "translatorCommit": "92d296bc389387ab83ec9b73dadebee7fbf5d10c",
+    "runtime": "netlib libf2c.zip",
+    "runtimeSha256": "cc84253b47b5c036aa1d529332a6c218a39ff71c76974296262b03776f822695",
+    "compiler": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 5.0.7-git",
+    "optimization": "-Os"
+  },
+  "patches": [
+    {
+      "file": "patches/fortran/0001-ef-flush-extension.patch",
+      "subject": "ef.f: stop using the non-standard FLUSH(unit) extension"
+    },
+    {
+      "file": "patches/fortran/0002-ef-limscf-logical.patch",
+      "subject": "ef.f: declare LOGICAL LIMSCF in EFSTR"
+    },
+    {
+      "file": "patches/fortran/0003-second-argument-count.patch",
+      "subject": "polar.f, writmo.f: call SECOND() with no argument"
+    },
+    {
+      "file": "patches/fortran/0004-consts-argument-count.patch",
+      "subject": "compfg.f: call CONSTS with one argument"
+    },
+    {
+      "file": "patches/fortran/0005-makpol-common-block-types.patch",
+      "subject": "makpol.f: declare SIMBOL and LTXT CHARACTER, so two COMMON blocks line up"
+    },
+    {
+      "file": "patches/fortran/0006-symtrz-s00002-nadim.patch",
+      "subject": "symtrz.f: restore NADIM in the ten short COMMON /S00002/ declarations"
+    },
+    {
+      "file": "patches/fortran/0007-common-block-layout.patch",
+      "subject": "sympro.f, polar.f, readmo.f, writmo.f: make four COMMON layouts agree"
+    },
+    {
+      "file": "patches/c/0008-cdiag-conflicting-prototypes.patch",
+      "subject": "cdiag.c (f2c output): K&R declarations for ec08c_ and me08b_"
+    },
+    {
+      "file": "patches/shim.c",
+      "subject": "added translation unit: fdate_, myflsh_, and int-returning wrappers for libf2c s_copy / s_cat / getenv_"
+    }
+  ],
+  "droppedCommonObjects": [
+    "alpha3_",
+    "am1blo_",
+    "atomi3_",
+    "atomic_",
+    "beta3_",
+    "core_",
+    "elemts_",
+    "expon3_",
+    "field_",
+    "ideaa_",
+    "ideap_",
+    "istope_",
+    "mndo_",
+    "natorb_",
+    "onele3_",
+    "pm3_",
+    "refs_",
+    "twoel3_",
+    "twoele_",
+    "vsips_"
+  ],
+  "artifacts": {
+    "mopac7.wasm": {
+      "raw": 789547,
+      "gzip": 305972,
+      "brotli": 257440
+    },
+    "mopac7.mjs": {
+      "raw": 65122,
+      "gzip": 18149,
+      "brotli": 16227
+    },
+    "total": {
+      "raw": 854669,
+      "gzip": 324377,
+      "brotli": 273405
+    }
+  },
+  "sha256": {
+    "mopac7.wasm": "793f1e711cfecd1345d407f60ffa4f6c379d04ac5fcc6469bd6325f3fe8559d3",
+    "mopac7.mjs": "badf1bc3ee6098570783721f0aa700b1efac70721abbffdd6dd759f0baf14425"
+  },
+  "limits": {
+    "maxHeavyAtoms": 30,
+    "maxHydrogenAtoms": 30,
+    "maxAtoms": 60,
+    "maxOrbitals": 150
+  },
+  "payload": {
+    "what": "wasm/data.js and wasm/glue.js, the two modules the npm package ships",
+    "wasmBytes": 789547,
+    "wasmSha256": "793f1e711cfecd1345d407f60ffa4f6c379d04ac5fcc6469bd6325f3fe8559d3",
+    "gzipBytes": 305972,
+    "base64Characters": 407964,
+    "dataModuleBytes": 408136,
+    "glueModuleBytes": 65325,
+    "note": "wasmSha256 is the digest of the DECOMPRESSED module, which is what src/__tests__ checks; the gzip stream itself is not reproducible across node releases."
+  }
+}

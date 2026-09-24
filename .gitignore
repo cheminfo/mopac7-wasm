@@ -1,0 +1,10 @@
+.claude
+.DS_Store
+/build
+/coverage
+/lib
+node_modules
+# Raw linker output. `scripts/embed-wasm.mjs` turns these two into wasm/data.js
+# and wasm/glue.js, which are what is committed and what npm ships.
+/wasm/mopac7.mjs
+/wasm/mopac7.wasm

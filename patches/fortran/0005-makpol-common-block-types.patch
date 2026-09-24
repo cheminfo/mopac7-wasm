@@ -1,0 +1,67 @@
+Subject: makpol.f: declare SIMBOL and LTXT CHARACTER, so two COMMON blocks line up
+
+WHAT IT FIXES
+  A real MOPAC 7.00 defect, found with AddressSanitizer on a wasm build and
+  fixed the same way in MOPAC 7.01.
+
+  makpol.f declares
+
+      CHARACTER KEYWRD*241, TXTATM*8
+
+  and then shares two blocks whose members it has just left to the implicit
+  rules:
+
+      COMMON /ATOMTX/ LTXT, TXTATM(NUMATM)      LTXT  is CHARACTER*1 in
+                                                getgeo.f, getgeg.f, geoutg.f
+                                                and geout.f -- but REAL*8 here
+      COMMON /SIMBOL/ SIMBOL(MAXPAR)            SIMBOL is CHARACTER*10 in
+                                                getgeo.f, getgeg.f, geoutg.f
+                                                and force.f  -- but REAL*8 here
+
+  So makpol.f sees /SIMBOL/ as MAXPAR*8 bytes where everybody else sees
+  MAXPAR*10, and f2c sizes the block from makpol's view. At the stock
+  MAXHEV=MAXLIT=30 that is 1440 bytes against the 1800 the other four write:
+
+      AddressSanitizer: global-buffer-overflow
+      WRITE of size 1 at 0x13081280
+      0x13081280 is located 0 bytes after global variable 'simbol_'
+        defined in 'simbol_com.c' of size 1440
+
+  The first byte past the end is written by getgeo.f's own initialisation
+  (`DO 10 I=1,MAXPAR / SIMBOL(I)='---'`, element 145 at byte 1440), i.e. on
+  EVERY run. What it lands on depends on how the linker orders the COMMON
+  blocks, which is why a native build and a wasm build of the identical C
+  disagree, and why MOPAC 7.00 gets molecules above five atoms badly wrong
+  under wasm (MNDO ethene 273.90 kcal/mol instead of 15.99) while water,
+  methane and formaldehyde come out exactly right. Raising MAXHEV/MAXLIT
+  moves the damage but does NOT remove it.
+
+  The fix is MOPAC 7.01's line, verbatim. The `IOFF=0` hunk is also 7.01's:
+  IOFF is read at `SIMBOL(IOFF+J)=SIMBOL(IM1+J)` without ever being set, and
+  is only zero here because f2c keeps locals static. It is on the MERS
+  (polymer) path, which nothing in verification/ exercises, so it is carried
+  for safety and is not covered by our tests.
+
+  7.01 also widens COMMON /GEOM/ here with an XCOORD array. That is a 7.01
+  feature, not a fix: no other MOPAC 7.00 file declares /GEOM/ that way, so
+  it is deliberately NOT taken.
+
+--- a/makpol.f
++++ b/makpol.f
+@@ -15,7 +15,7 @@
+ *   
+ ************************************************************************
+ 
+-      CHARACTER KEYWRD*241, TXTATM*8
++      CHARACTER KEYWRD*241, TXTATM*8, SIMBOL*10, LTXT*1
+       COMMON /KEYWRD/ KEYWRD
+       COMMON /GEOVAR/ NVAR, LOC(2,MAXPAR), IDUMY, XPARAM(MAXPAR)
+       COMMON /GEOM  / GEO(3,NUMATM)
+@@ -26,6 +26,7 @@
+      1NA(NUMATM),NB(NUMATM),NC(NUMATM)
+       COMMON /GEOSYM/ NDEP, LOCPAR(MAXPAR), IDEPFN(MAXPAR),
+      1                      LOCDEP(MAXPAR)
++         IOFF=0
+          MERS=READA(KEYWRD,INDEX(KEYWRD,' MERS'))
+          DO 270 I=1,NATOMS
+   270    IF(LABELS(I).EQ.99)LABELS(I)=100

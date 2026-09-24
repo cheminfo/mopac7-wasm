@@ -1,0 +1,97 @@
+Subject: polar.f, writmo.f: call SECOND() with no argument
+
+WHAT IT FIXES
+  second.f declares
+
+      FUNCTION SECOND()
+      DOUBLE PRECISION SECOND
+
+  i.e. no dummy arguments, but polar.f (6 sites) and writmo.f (2 sites) call
+  it as SECOND(1). f2c reproduces that faithfully, so the callers emit
+  `second_(&c__1)` -- signature (i32)->f64 -- against a definition of
+  ()->f64. wasm-ld reports
+
+      warning: function signature mismatch: second_
+      >>> defined as (i32) -> f64 in polar.o
+      >>> defined as () -> f64 in second.o
+
+  and links a trapping stub, so any run that reaches one of those timing
+  calls aborts with `RuntimeError: unreachable`. Dropping the argument is
+  what the callee has always expected; SECOND ignores arguments entirely.
+
+--- a/polar.f
++++ b/polar.f
+@@ -541,7 +541,7 @@
+ C  X: ID=1   Y: ID=2   Z: ID=3
+ C
+       DO 70 ID = 1,3
+-         CMPTIM = SECOND(1)
++         CMPTIM = SECOND()
+          LAST = .FALSE.
+ C
+ C  CALCULATE THE DIPOLE MATRIX.
+@@ -589,7 +589,7 @@
+          CALL HPLUSF (F,H1,NORBS)
+ C..............................................................
+          IF (.NOT.LAST) GO TO 20
+-         CMPTIM = SECOND(1) - CMPTIM
++         CMPTIM = SECOND() - CMPTIM
+          WRITE(6,30) ICOUNT,CMPTIM,DIFF,DELA
+    30    FORMAT (/' CONVERGED IN',I4,' ITERATIONS IN',F10.2,' SECONDS',
+      1         /'           DENSITY CONVERG. TO ',1PD12.5,
+@@ -767,7 +767,7 @@
+       BAVY = 0.0D+00
+       BAVZ = 0.0D+00
+       DO 90 ID = 1,9
+-         CMPTIM = SECOND(1)
++         CMPTIM = SECOND()
+          IA=IDA(ID)
+          IB=IDB(ID)
+          LAST = .FALSE.
+@@ -888,7 +888,7 @@
+          CALL HPLUSF(F,DA,NORBS)
+ C..............................................................
+          IF (.NOT.LAST) GO TO 40
+-         CMPTIM = SECOND(1) - CMPTIM
++         CMPTIM = SECOND() - CMPTIM
+          WRITE(6,50) ICOUNT,CMPTIM
+    50    FORMAT(/' CONVERGED IN',I4,' ITERATIONS IN',F10.2,
+      1            ' SECONDS')
+@@ -1027,7 +1027,7 @@
+       BAVY = 0.0D+00
+       BAVZ = 0.0D+00
+       DO 80 ID = 1,6
+-         CMPTIM = SECOND(1)
++         CMPTIM = SECOND()
+          IA=IDA(ID)
+          IB=IDB(ID)
+          LAST = .FALSE.
+@@ -1135,7 +1135,7 @@
+          CALL HPLUSF(F,DA,NORBS)
+ C..............................................................
+          IF (.NOT.LAST) GO TO 30
+-         CMPTIM = SECOND(1) - CMPTIM
++         CMPTIM = SECOND() - CMPTIM
+          WRITE(6,40) ICOUNT,CMPTIM
+    40    FORMAT(/' CONVERGED IN',I4,' ITERATIONS IN',F10.2,
+      1            ' SECONDS')
+--- a/writmo.f
++++ b/writmo.f
+@@ -237,7 +237,7 @@
+      1WRITE(6,'(    10X,''MOLECULAR WEIGHT        ='',F11.3)')SUMW
+       IF(LATOM.EQ.0) WRITE(6,'(/)')
+       WRITE(6,'(10X,''SCF CALCULATIONS  =   '',I14 )') NSCF
+-      TIM=SECOND(1)-TIME0
++      TIM=SECOND()-TIME0
+       I=TIM*0.000001D0
+       TIM=TIM-I*1000000
+       CALL TIMOUT(6,TIM)
+@@ -615,7 +615,7 @@
+       WRITE(IWRITE,'(  10X,''MOLECULAR WEIGHT        ='',F14.3)')SUMW
+       WRITE(IWRITE,'(  10X,''SCF CALCULATIONS        =''
+      1,I10)') NSCF
+-      TIM=SECOND(1)-TIME0
++      TIM=SECOND()-TIME0
+       CALL TIMOUT(IWRITE,TIM)
+       WRITE(IWRITE,'(//10X,''FINAL GEOMETRY OBTAINED'',36X,''CHARGE'')')
+       CALL GEOUT(IWRITE)

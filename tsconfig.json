@@ -1,0 +1,10 @@
+{
+  "extends": "@zakodium/tsconfig",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "outDir": "lib",
+    "lib": ["ESNext", "DOM"],
+    "types": ["node"]
+  },
+  "include": ["src", "benchmark", "vite*.ts"]
+}

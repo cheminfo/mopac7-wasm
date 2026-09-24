@@ -1,0 +1,70 @@
+{
+  "name": "mopac7-wasm",
+  "version": "0.0.0",
+  "license": "MIT AND BSD-3-Clause AND HPND",
+  "description": "MOPAC 7 compiled to WebAssembly: MNDO, MINDO/3, AM1 and PM3 semi-empirical calculations, with molecular orbitals, in node and in the browser",
+  "author": "Luc Patiny",
+  "type": "module",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "files": [
+    "lib",
+    "src",
+    "wasm"
+  ],
+  "keywords": [
+    "mopac",
+    "semiempirical",
+    "nddo",
+    "mndo",
+    "am1",
+    "pm3",
+    "mindo3",
+    "molecular-orbitals",
+    "quantum-chemistry",
+    "computational-chemistry",
+    "chemistry",
+    "wasm",
+    "webassembly"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cheminfo/mopac7-wasm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cheminfo/mopac7-wasm/issues"
+  },
+  "homepage": "https://github.com/cheminfo/mopac7-wasm#readme",
+  "scripts": {
+    "benchmark": "node benchmark/water.js",
+    "build-wasm": "bash scripts/build-wasm.sh",
+    "check-types": "tsc --noEmit",
+    "clean": "rimraf coverage lib",
+    "eslint": "eslint .",
+    "eslint-fix": "eslint . --fix",
+    "prepack": "npm run tsc",
+    "prettier": "prettier --check .",
+    "prettier-write": "prettier --write .",
+    "test": "npm run test-only && npm run check-types && npm run eslint && npm run prettier",
+    "test-only": "vitest run --coverage",
+    "tsc": "npm run clean && npm run tsc-build",
+    "tsc-build": "tsc --project tsconfig.build.json",
+    "verify-wasm": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "uint8-base64": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@vitest/coverage-v8": "^5.0.1",
+    "@zakodium/tsconfig": "^1.0.5",
+    "benchmark": "^2.1.4",
+    "eslint": "^9.39.5",
+    "eslint-config-cheminfo-typescript": "^22.1.0",
+    "prettier": "^3.9.9",
+    "rimraf": "^6.1.3",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.1"
+  }
+}

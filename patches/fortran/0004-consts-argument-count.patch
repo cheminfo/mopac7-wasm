@@ -1,0 +1,21 @@
+Subject: compfg.f: call CONSTS with one argument
+
+WHAT IT FIXES
+  consts.f is `SUBROUTINE CONSTS (COORD)`, but compfg.f calls
+  `CALL CONSTS (COORD,.TRUE.)`. Same failure mode as patch 0003: f2c emits
+  `consts_(coord, &c_true)`, wasm-ld sees (i32,i32)->i32 against
+  (i32)->i32, links a trapping stub, and the first geometry evaluation
+  that takes that branch aborts with `RuntimeError: unreachable`.
+  The extra .TRUE. has no callee to read it.
+
+--- a/compfg.f
++++ b/compfg.f
+@@ -153,7 +153,7 @@
+       ENDIF
+       IF (ISEPS) THEN
+ C The following routine constructs the dielectric screening surface
+-           CALL CONSTS (COORD,.TRUE.)
++           CALL CONSTS (COORD)
+ C The following routine constructs dielectric response matrix CCMAT
+         CALL BTOC (COORD)
+ C A. Klamt 18.7.91

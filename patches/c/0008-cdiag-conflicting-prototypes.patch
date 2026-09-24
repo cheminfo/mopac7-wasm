@@ -1,0 +1,46 @@
+Subject: cdiag.c (f2c output): K&R declarations for ec08c_ and me08b_
+
+APPLIES TO  the C that f2c emits, not to the Fortran.
+
+WHAT IT FIXES
+  cdiag.f uses the classic F77 storage-aliasing trick: CDIAG holds a
+  COMPLEX work array and passes it to EC08C, which declares the same
+  storage REAL and walks it as (re, im) pairs; ME08B does the same. f2c
+  reproduces the two views faithfully, so within one translation unit the
+  local `extern` declaration (typed from the call site) and the definition
+  disagree and clang stops with a hard error, which no -Wno- flag can
+  suppress:
+
+      cdiag.c:445:22: error: conflicting types for 'ec08c_'
+      cdiag.c:882:22: error: conflicting types for 'me08b_'
+
+  Both views are the same wasm signature -- every pointer is i32 -- so the
+  generated code is correct; only the C type system objects. Reducing the
+  two declarations to K&R empty parens lets the definitions stand. This is
+  the only place in MOPAC 7 where it happens.
+
+  Do NOT "fix" this in the Fortran: EC08C really does read that array as
+  real pairs, and retyping either side would change the arithmetic.
+
+--- a/cdiag.c
++++ b/cdiag.c
+@@ -34,8 +34,7 @@
+     static real s;
+     static complex w[6000];
+     static integer i1, ia, ii, iv;
+-    extern /* Subroutine */ int ec08c_(complex *, complex *, real *, complex *
+-	    , integer *, integer *, complex *), me08a_(complex *, complex *, 
++    extern /* Subroutine */ int ec08c_(), me08a_(complex *, complex *, 
+ 	    complex *, integer *, integer *, complex *), sort_(real *, 
+ 	    complex *, integer *);
+     extern /* Complex */ VOID fm06as_(complex *, integer *, complex *, 
+@@ -715,8 +714,7 @@
+     static real s1;
+     static complex cw, qj;
+     static real pp, pp1;
+-    extern /* Subroutine */ int me08b_(complex *, complex *, complex *, 
+-	    integer *, integer *);
++    extern /* Subroutine */ int me08b_();
+     extern /* Complex */ VOID fm06as_(complex *, integer *, complex *, 
+ 	    integer *, complex *, integer *), fm06bs_(complex *, integer *, 
+ 	    complex *, integer *, complex *, integer *);

@@ -1,0 +1,133 @@
+Subject: sympro.f, polar.f, readmo.f, writmo.f: make four COMMON layouts agree
+
+WHAT IT FIXES
+  Three more MOPAC 7.00 COMMON-block disagreements, all fixed the same way in
+  MOPAC 7.01. Each was found by compiling every f2c-emitted COMMON struct and
+  comparing its size per file (scripts/check-commons.mjs, which the build runs
+  and which fails on any remaining case).
+
+  1. /SYMOPS/ -- sympro.f declares
+
+         COMMON /SYMOPS/ R( 9,120), NSYM, IPO(NUMATM,120), NENT
+
+     while fmat.f, force.f and freqcy.f declare R(14,120). Every member after
+     R is therefore at a different offset in the two groups (NSYM 4800 bytes
+     apart), and the block that gets linked is the smaller one, so a FORCE or
+     FREQCY run writes 4800 bytes past its end. MOPAC 7.01 uses R(14,120) in
+     all nine places.
+
+  2. /SCRACH/ -- polar.f sizes its scratch view with MAXALL**2 where every
+     other file uses MAXPAR**2. With MAXHEV=MAXLIT=30 that is 44100 against
+     32400 doubles, so a POLAR run writes 93600 bytes past the block. MOPAC
+     7.01 uses MAXPAR*MAXPAR here.
+
+  3. /SYMRES/ -- its arrays are dimensioned MXDIM, and MXDIM is a local
+     PARAMETER that readmo.f and writmo.f set to MAXORB+NUMATM while
+     matou1.f and symtrz.f set it to MAXPAR+NUMATM. Two different layouts of
+     one block again (NAMO and INDX 120 bytes apart at the stock sizes), plus
+     a 240-byte overflow that AddressSanitizer catches on any molecule whose
+     symmetry is analysed:
+
+         AddressSanitizer: global-buffer-overflow
+         WRITE of size 1 ... 228 bytes after global variable 'symres_'
+           defined in 'symres_com.c' of size 1720
+
+     MOPAC 7.01 sets MXDIM = MAXPAR+NUMATM in all sixteen places.
+
+  A fourth case, /GEOM/, is NOT patched here: polar.f alone declares it as
+  `GEO(3,NUMATM), COORD(3,NUMATM)` while twenty-six files declare only the
+  first half, and GEO sits at offset 0 in both views, so nothing is at a wrong
+  offset -- the definition is merely too small. 7.01 fixes that by adding a
+  second array to all twenty-six declarations; we let the build pad the one
+  definition instead, which is the same thing in one place. See
+  scripts/check-commons.mjs.
+
+--- a/sympro.f
++++ b/sympro.f
+@@ -2,7 +2,7 @@
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       INCLUDE 'SIZES'
+       DIMENSION H(*), DELDIP(3,*)
+-      COMMON /SYMOPS/ R( 9,120), NSYM, IPO(NUMATM,120), NENT
++      COMMON /SYMOPS/ R(14,120), NSYM, IPO(NUMATM,120), NENT
+       COMMON /SYMOPC/ ISYMT(6)
+       CHARACTER*10 ISYMT
+       COMMON /ATOMS/ COORD, NATOMS, NVAR
+@@ -26,7 +26,7 @@
+       SUBROUTINE SYMR
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       INCLUDE 'SIZES'
+-      COMMON /SYMOPS/ R(9,120), NSYM, IPO(NUMATM,120), NENT
++      COMMON /SYMOPS/ R(14,120), NSYM, IPO(NUMATM,120), NENT
+       COMMON /SYMOPC/ ISYMT(6)
+       CHARACTER*10 ISYMT
+ *****************************************************************
+@@ -391,7 +391,7 @@
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       INCLUDE 'SIZES'
+       DIMENSION H(*), DIP(3,*)
+-      COMMON /SYMOPS/ R( 9,120), NSYM, IPO(NUMATM,120), NENT
++      COMMON /SYMOPS/ R(14,120), NSYM, IPO(NUMATM,120), NENT
+       COMMON /SYMOPC/ ISYMT(6)
+       CHARACTER*10 ISYMT
+ *****************************************************************
+@@ -553,7 +553,7 @@
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       INCLUDE 'SIZES'
+       DIMENSION  E(NUMAT*3), V(NUMAT*NUMAT*9)
+-      COMMON /SYMOPS/ R( 9,120), NSYM, IPO(NUMATM,120), NENT
++      COMMON /SYMOPS/ R(14,120), NSYM, IPO(NUMATM,120), NENT
+       COMMON /SYMOPC/ ISYMT(6)
+       CHARACTER*10 ISYMT
+ *********************************************************************
+@@ -631,7 +631,7 @@
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       INCLUDE 'SIZES'
+       DIMENSION H(*), DELDIP(3,*)
+-      COMMON /SYMOPS/ R( 9,120), NSYM, IPO(NUMATM,120), NENT
++      COMMON /SYMOPS/ R(14,120), NSYM, IPO(NUMATM,120), NENT
+       COMMON /SYMOPC/ ISYMT(6)
+       CHARACTER*10 ISYMT
+ *****************************************************************
+@@ -821,7 +821,7 @@
+       SUBROUTINE SYMP
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       INCLUDE 'SIZES'
+-      COMMON /SYMOPS/ R(9,120), NSYM, IPO(NUMATM,120), NENT
++      COMMON /SYMOPS/ R(14,120), NSYM, IPO(NUMATM,120), NENT
+       COMMON /SYMOPC/ ISYMT(6)
+       CHARACTER*10 ISYMT
+       CHARACTER*5 OPER
+--- a/polar.f
++++ b/polar.f
+@@ -17,7 +17,7 @@
+       COMMON /WORK1/ X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,
+      1               XDUMY(21*MPACK-10*MAXORB*MAXORB)
+       COMMON /WORK3/ X11,X12,XDUMY1(4*MPACK-2*MAXORB*MAXORB)
+-      COMMON /SCRACH/ X13, XDUMY2(MAXALL*MAXALL-MAXORB*MAXORB)
++      COMMON /SCRACH/ X13, XDUMY2(MAXPAR*MAXPAR-MAXORB*MAXORB)
+ C..
+       COMMON /TITLES/ KOMENT,TITLE
+       COMMON /POLVOL/ POLVOL(107)
+--- a/readmo.f
++++ b/readmo.f
+@@ -62,7 +62,7 @@
+      * NMIDLE(NUMATM),NLAST(NUMATM),NORBS,NELECS,NALPHA,NBETA,
+      * NCLOSE,NOPEN,NDUMY,FRACT
+       COMMON /OKMANY/ ISOK
+-      PARAMETER (MXDIM=MAXORB+NUMATM)
++      PARAMETER (MXDIM=MAXPAR+NUMATM)
+       COMMON /SYMRES/ TRANS,RTR,SIG,NAME,NAMO(MXDIM),INDX(MXDIM),
+      * ISTA(2)
+       COMMON /ISTOPE/ AMS(107)
+--- a/writmo.f
++++ b/writmo.f
+@@ -24,7 +24,7 @@
+       COMMON /NUMSCF/ NSCF
+       COMMON /WMATRX/ WJ(N2ELEC), WK(N2ELEC)
+       COMMON /ATHEAT/ ATHEAT
+-      PARAMETER (MXDIM=MAXORB+NUMATM)
++      PARAMETER (MXDIM=MAXPAR+NUMATM)
+       COMMON /SYMRES/ TRANS,RTR,SIG,NAME,NAMO(MXDIM),INDX(MXDIM),ISTA(2)
+       COMMON /CORE  / CORE(107)
+       COMMON /LAST  / LAST

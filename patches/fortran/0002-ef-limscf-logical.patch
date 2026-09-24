@@ -1,0 +1,26 @@
+Subject: ef.f: declare LOGICAL LIMSCF in EFSTR
+
+WHAT IT FIXES
+  Subroutine EFSTR (ef.f) pulls LIMSCF in through `COMMON /SCFTYP/ EMIN,
+  LIMSCF` and then assigns `LIMSCF=.FALSE.`, but -- unlike subroutine EF at
+  the top of the same file -- it never declares it LOGICAL, so under the
+  default implicit rules LIMSCF is REAL. f2c refuses the assignment with
+
+      Error on line 590 of ef.f: impossible conversion
+
+  and produces a truncated efstr_ (f2c still exits 0, so the build script
+  greps its output for "Error on line"). Real compilers of the day accepted
+  it because the COMMON block fixed the type. One declaration line restores
+  the intent; the generated C is unchanged apart from the type of that one
+  variable.
+
+--- a/ef.f
++++ b/ef.f
+@@ -562,6 +562,7 @@
+      $MODE,NSTEP,NEGREQ,IPRNT
+       DIMENSION IPOW(9)               
+       LOGICAL RESTRT,SCF1,LDUM,LUPD,log,rrscal,donr,gnmin 
++      LOGICAL LIMSCF
+       CHARACTER*241 KEYWRD,LINE                                               
+       CHARACTER CHDOT*1,ZERO*1,NINE*1,CH*1
+       DATA CHDOT,ZERO,NINE   /'.','0','9'/                     

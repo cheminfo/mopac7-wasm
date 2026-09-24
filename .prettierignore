@@ -1,0 +1,9 @@
+CHANGELOG.md
+/build
+coverage
+/lib
+node_modules
+package-lock.json
+src/__tests__/data
+/verification
+/wasm
