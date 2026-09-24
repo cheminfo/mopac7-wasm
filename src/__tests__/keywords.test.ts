@@ -88,7 +88,35 @@ test('UHF is refused, and the message points at the spin option', () => {
   // The multiplicity on its own is fine.
   expect(
     buildMopac7Input({ ...MOLECULES.water, spin: 'triplet' }).split('\n', 1)[0],
-  ).toBe('AM1 1SCF XYZ VECTORS ALLVEC DEBUG PRECISE GEO-OK CHARGE=0 TRIPLET');
+  ).toBe('AM1 1SCF XYZ VECTORS ALLVEC PRECISE GEO-OK CHARGE=0 TRIPLET MMOK');
+});
+
+test.each(['MMOK', 'NOMM', 'nomm'])(
+  '%s in options.keywords is refused, and the message points at amideCorrection',
+  (keyword) => {
+    const error = catchMopac7Error(() =>
+      buildMopac7Input({ ...MOLECULES.water, keywords: [keyword] }),
+    );
+
+    expect(error.code).toBe('input');
+    expect(error.message).toContain(
+      'is set through the amideCorrection option',
+    );
+  },
+);
+
+test('the amide keyword is on every deck, and amideCorrection picks which', () => {
+  // moldat.f stops on any -HNCO- group when the deck names neither, so there is
+  // no third state: water carries one too.
+  expect(buildMopac7Input(MOLECULES.water).split('\n', 1)[0]).toContain(
+    ' MMOK',
+  );
+  expect(
+    buildMopac7Input({ ...MOLECULES.water, amideCorrection: 'nomm' }).split(
+      '\n',
+      1,
+    )[0],
+  ).toBe('AM1 1SCF XYZ VECTORS ALLVEC PRECISE GEO-OK CHARGE=0 NOMM');
 });
 
 test('a coordinate count that does not match the elements is refused', () => {

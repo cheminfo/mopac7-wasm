@@ -52,7 +52,7 @@ test('optimize: true relaxes the geometry and MOPAC says BFGS converged', async 
   expect(result.heatOfFormation).toBeLessThan(single.heatOfFormation);
 });
 
-test('allOrbitals: false keeps every energy and drops the ALLVEC DEBUG dump', async () => {
+test('allOrbitals: false keeps every energy and drops the ALLVEC dump', async () => {
   const result = await mopac7({ ...MOLECULES.water, allOrbitals: false });
 
   expect(result.heatOfFormation).toBe(-59.17072);
@@ -74,9 +74,7 @@ test('allOrbitals: false on a molecule whose window is partial throws and says w
 
   expect(error.code).toBe('parse');
   expect(error.message).toContain('MOPAC printed root 7 where root 1');
-  expect(error.message).toContain(
-    'the deck needs the ALLVEC and DEBUG keywords',
-  );
+  expect(error.message).toContain('the deck needs the ALLVEC keyword');
 });
 
 test('precise: false leaves the SCF looser, in the fifth decimal', async () => {

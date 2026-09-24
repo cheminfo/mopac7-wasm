@@ -1,6 +1,6 @@
 {
   "name": "mopac7-wasm",
-  "builtAt": "2026-09-24T15:50:05.309Z",
+  "builtAt": "2026-09-24T17:27:11.833Z",
   "program": {
     "name": "MOPAC",
     "version": "7.00",
@@ -64,6 +64,18 @@
       "subject": "hqrii.f: never return an all-zero column for a degenerate root"
     },
     {
+      "file": "patches/fortran/0010-wrtkey-allvec.patch",
+      "subject": "wrtkey.f: recognise ALLVEC, so it no longer needs DEBUG"
+    },
+    {
+      "file": "patches/fortran/0011-sizes-64-56.patch",
+      "subject": "SIZES: MAXHEV=64, MAXLIT=56, so the build holds paclitaxel"
+    },
+    {
+      "file": "patches/fortran/0012-nhco-bound.patch",
+      "subject": "moldat.f and the seven files sharing COMMON /MOLMEC/: bound NHCO"
+    },
+    {
       "file": "patches/c/0008-cdiag-conflicting-prototypes.patch",
       "subject": "cdiag.c (f2c output): K&R declarations for ec08c_ and me08b_"
     },
@@ -96,9 +108,9 @@
   ],
   "artifacts": {
     "mopac7.wasm": {
-      "raw": 790343,
-      "gzip": 306172,
-      "brotli": 257107
+      "raw": 792215,
+      "gzip": 306481,
+      "brotli": 257703
     },
     "mopac7.mjs": {
       "raw": 65122,
@@ -106,28 +118,28 @@
       "brotli": 16227
     },
     "total": {
-      "raw": 855465,
-      "gzip": 324592,
-      "brotli": 273731
+      "raw": 857337,
+      "gzip": 324895,
+      "brotli": 274128
     }
   },
   "sha256": {
-    "mopac7.wasm": "d7cead8be4ea2ec6ac78e658e910bf6f9971f95b046ec78b331bcc3ff6f8b771",
+    "mopac7.wasm": "ba8d44379742392e462a559918f02b4e3f106c2c53a46eb703d0820379cbdbfa",
     "mopac7.mjs": "badf1bc3ee6098570783721f0aa700b1efac70721abbffdd6dd759f0baf14425"
   },
   "limits": {
-    "maxHeavyAtoms": 30,
-    "maxHydrogenAtoms": 30,
-    "maxAtoms": 60,
-    "maxOrbitals": 150
+    "maxHeavyAtoms": 64,
+    "maxHydrogenAtoms": 56,
+    "maxAtoms": 120,
+    "maxOrbitals": 312
   },
   "payload": {
     "what": "wasm/data.js and wasm/glue.js, the two modules the npm package ships",
-    "wasmBytes": 790343,
-    "wasmSha256": "d7cead8be4ea2ec6ac78e658e910bf6f9971f95b046ec78b331bcc3ff6f8b771",
-    "gzipBytes": 306172,
-    "base64Characters": 408232,
-    "dataModuleBytes": 408404,
+    "wasmBytes": 792215,
+    "wasmSha256": "ba8d44379742392e462a559918f02b4e3f106c2c53a46eb703d0820379cbdbfa",
+    "gzipBytes": 306481,
+    "base64Characters": 408644,
+    "dataModuleBytes": 408816,
     "glueModuleBytes": 65325,
     "note": "wasmSha256 is the digest of the DECOMPRESSED module, which is what src/__tests__ checks; the gzip stream itself is not reproducible across node releases."
   }

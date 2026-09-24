@@ -114,7 +114,7 @@ There is nothing to configure, anywhere. The WebAssembly binary lives inside the
 JavaScript — gzipped, base64-encoded and decoded with `DecompressionStream` —
 so there is no `.wasm` file to serve, no `locateFile`, no `vite-plugin-wasm`, no
 `experiments.asyncWebAssembly` and no asset rule. The cost is the payload and
-the glue — 473 kB of bundle, 327 kB gzipped over the wire — plus a few
+the glue — 474 kB of bundle, 328 kB gzipped over the wire — plus a few
 milliseconds of decoding and compiling, once per JavaScript realm.
 
 `compileMopac7()` returns the cached `WebAssembly.Module`, which is
@@ -135,9 +135,22 @@ every worker, and each one instantiates it in well under a millisecond.
 | `Mopac7Error`                | carries `code`, and the deck and listing that produced the failure                                |
 
 `Mopac7Error.code` is one of `'input'`, `'keywords'`, `'geometry'`,
-`'parameters'`, `'scf'`, `'aborted'` or `'parse'`. A run that did not reach
-self-consistency throws rather than returning orbital energies nobody should
-use.
+`'parameters'`, `'limits'`, `'scf'`, `'halt'`, `'aborted'` or `'parse'`. A run
+that did not reach self-consistency throws rather than returning orbital
+energies nobody should use.
+
+MOPAC 7 exits 0 at all 114 of its `STOP` statements, so the exit code says
+nothing and the listing says everything. When MOPAC stops, the error quotes what
+it printed, verbatim, rather than guessing from a block that is missing:
+
+```
+MOPAC stopped: THIS SYSTEM CONTAINS -HNCO- GROUPS. / YOU MUST SPECIFY "NOMM" OR
+"MMOK" REGARDING MOLECULAR MECHANICS CORRECTION
+```
+
+Halts that a caller can act on carry a code of their own; anything else comes
+back as `'halt'` with the last lines of the listing attached, so a stop nobody
+anticipated is still reported as itself.
 
 Every instance is discarded after one calculation, and that is not a choice:
 MOPAC 7 is Fortran 77 whose whole state lives in `SAVE`d COMMON blocks, so a
@@ -147,9 +160,14 @@ benchmark measures the difference at 5.6–6.6x.
 
 ## What it does not do
 
-- **At most 30 non-hydrogen atoms and 30 hydrogens** (150 atomic orbitals), the
-  bounds MOPAC's own `SIZES` file was compiled with. Larger molecules are
-  refused before the module is touched; `MOPAC7_LIMITS` carries the numbers.
+- **At most 64 non-hydrogen atoms and 56 hydrogens** (120 atoms, 312 atomic
+  orbitals), the bounds MOPAC's own `SIZES` file was compiled with. That holds
+  paclitaxel — 62 heavy atoms, 51 hydrogens, 299 orbitals — which is what the
+  pair was chosen for; the 1993 archive's own 30/30 stops at caffeine. Larger
+  molecules are refused before the module is touched, and `MOPAC7_LIMITS`
+  carries the numbers. Raising it costs declared memory and almost no download:
+  the module declares 87.4 MiB of WebAssembly memory instead of 62.9, for 1,525
+  more bytes of `.wasm` raw and 97 more bytes in the compressed payload.
 - **Restricted (RHF) only.** `spin` writes MOPAC's multiplicity keyword and
   MOPAC then runs its RHF half-electron treatment, which is a real open-shell
   calculation: a triplet O<sub>2</sub> comes out 27.4 kcal/mol below the singlet.
@@ -168,9 +186,16 @@ benchmark measures the difference at 5.6–6.6x.
   (sum its densities), never as two named orbitals.
 - **`keywords` entries are checked, not passed through.** One keyword per array
   entry, printable ASCII, no whitespace; `+` (MOPAC's second-keyword-line
-  marker), `SETUP` and `UHF` are refused with `code: 'input'`. Without that, a
-  keyword holding a newline would shift every line of the deck below it and
-  MOPAC would silently read the wrong geometry.
+  marker), `SETUP`, `UHF`, `MMOK` and `NOMM` are refused with `code: 'input'`.
+  Without that, a keyword holding a newline would shift every line of the deck
+  below it and MOPAC would silently read the wrong geometry.
+- **A keyword MOPAC does not know stops the run.** The deck carries no `DEBUG`,
+  which is what would turn an unrecognised keyword into a line of the listing
+  instead of a halt, so a typo throws with `code: 'keywords'` and the keyword
+  named. Put `'DEBUG'` in `keywords` to get MOPAC's old behaviour back, and the
+  leftovers in `result.unknownKeywords`.
+- **MOPAC's molecular-mechanics correction holds 60 peptide torsions.** Past
+  that it stops and says so, rather than writing past its own array.
 - **The elements MOPAC 7 carries, and no more.** `MOPAC7_ELEMENTS` lists them
   per method — PM3 is the widest at 30 elements, MINDO/3 the narrowest at 10,
   and only PM3 has magnesium while only MNDO and AM1 have lithium. `Na` and `K`
@@ -198,12 +223,16 @@ The 156 Fortran-77 files come from the `1993_MOPAC7` directory of
 `ed31531`, checked by file count, by a tree digest and by the presence of its own
 public-domain notice. They are translated to C with
 [f2c](https://www.netlib.org/f2c/) 20240504, built from source, and compiled with
-[Emscripten](https://emscripten.org/) against netlib libf2c. Eight small patches
-are applied, each a file in `patches/` whose header quotes the exact compiler,
-linker or sanitizer message it fixes: five are portability fixes and three are
-genuine COMMON-block defects in MOPAC 7.00 that MOPAC 7.01 also fixed, found
-here with AddressSanitizer and a static size check the build runs on every
-block. Nothing in the hamiltonians, the parameters or the SCF is touched.
+[Emscripten](https://emscripten.org/) against netlib libf2c. Twelve small
+patches are applied, each a file in `patches/` whose header quotes the exact
+compiler, linker or sanitizer message, or the measurement, that it answers: five
+are portability fixes; three are genuine COMMON-block defects in MOPAC 7.00 that
+MOPAC 7.01 also fixed, found here with AddressSanitizer and a static size check
+the build runs on every block; one recovers an eigenvector MOPAC's own HQRII
+drops; one bounds an array MOPAC fills with no bound check; one makes `wrtkey.f`
+recognise the `ALLVEC` keyword that `matou1.f` implements and `wrtkey.f` never
+listed; and one is the two numbers in `SIZES`. Nothing in the hamiltonians, the
+parameters or the SCF is touched.
 
 MOPAC 7.00 was written at the Frank J. Seiler Research Laboratory, United States
 Air Force Academy, and distributed through the Quantum Chemistry Program

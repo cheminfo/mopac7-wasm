@@ -1,0 +1,55 @@
+Subject: wrtkey.f: recognise ALLVEC, so it no longer needs DEBUG
+
+WHAT IT FIXES
+  MOPAC 7 implements ALLVEC in matou1.f -- `ALLPRT=(INDEX(KEYWRD,'ALLVEC')
+  .NE.0)` makes it print every molecular orbital instead of a sixteen-root
+  window around the HOMO -- and then never lists it in wrtkey.f, the routine
+  that walks the keyword line and stops on anything it does not know:
+
+          UNRECOGNIZED KEY-WORDS: ( ALLVEC)
+          CALCULATION STOPPED TO AVOID WASTING TIME.
+          IF THESE ARE DEBUG KEYWORDS, ADD THE KEYWORD "DEBUG"
+
+  So the only way to get the whole coefficient matrix out of MOPAC 7 is to
+  add DEBUG as well -- and DEBUG is also what arms the per-iteration
+  eigenvector dump, because iter.f reads
+
+          PRTVEC=( INDEX(KEYWRD,'VECT') .NE. 0  .AND. DEBUG)
+
+  and then prints the entire NORBS x NORBS matrix on EVERY SCF cycle. The
+  final block that a consumer actually reads is one of them; the other
+  eighteen are the cost. Measured on paclitaxel, 299 orbitals, 19 cycles:
+  22.2 MiB of listing where the converged block is 1.2 MiB.
+
+  ALLVEC is a keyword of the program, not a debug switch. wrtkey.f simply
+  never got the line.
+
+WHAT IT DOES
+  Adds the one MYWORD call that consumes ALLVEC and the FORMAT that echoes
+  it, in the same shape as the VECTORS line directly above. MYWORD blanks the
+  whole word out of ALLKEY, which is what keeps the end-of-routine
+  "UNRECOGNIZED KEY-WORDS" test from firing. Label 211 was free.
+
+  'VECT' is tested first and 'ALLVEC' does not contain 'VECT', so the two do
+  not interfere in either order. Nothing else in the program reads ALLVEC, and
+  DEBUG keeps every meaning it had: a deck that carries it still gets the
+  per-iteration dump.
+
+--- a/wrtkey.f
++++ b/wrtkey.f
+@@ -28,6 +28,7 @@
+      2         ,10X,''          AUSTIN, TEXAS, 78712'')')
+       ENDIF
+       IF (MYWORD(ALLKEY,'VECT') ) WRITE(6,210)
++      IF (MYWORD(ALLKEY,'ALLVEC') ) WRITE(6,211)
+       IF (MYWORD(ALLKEY,' EXTE') ) THEN
+          I=INDEX(KEYWRD,' EXTE')
+          J=INDEX(KEYWRD(I:),'=')+I
+@@ -456,6 +457,7 @@
+   200 FORMAT(' *  PRNT     - EXTRA PRINTING IN EF ROUTINE')
+ C ***********************************************************
+   210 FORMAT(' *  VECTORS  - FINAL EIGENVECTORS TO BE PRINTED')
++  211 FORMAT(' *  ALLVEC   - EVERY EIGENVECTOR TO BE PRINTED')
+   220 FORMAT(' *  EXTERNAL - USE ATOMIC PARAMETERS FROM THE FOLLOWING '
+      1,'FILE',/15X,A)
+   230 FORMAT(' *  DENSITY  - FINAL DENSITY MATRIX TO BE PRINTED')

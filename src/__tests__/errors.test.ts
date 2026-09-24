@@ -1,11 +1,12 @@
 import { expect, test } from 'vitest';
 
+import { buildMopac7Input } from '../input/buildMopac7Input.ts';
 import { mopac7 } from '../mopac7.ts';
 import { parseMopac7Output } from '../output/parseMopac7Output.ts';
 import { runMopac7Job } from '../wasm/runMopac7Job.ts';
 
 import { catchMopac7Error, catchMopac7ErrorAsync } from './catchMopac7Error.ts';
-import { MOLECULES } from './molecules.ts';
+import { EXTRA_MOLECULES, MOLECULES } from './molecules.ts';
 
 const WATER_GEOMETRY = [
   ' O      0.00000000 0     0.00000000 0     0.00000000 0   0   0   0',
@@ -60,17 +61,89 @@ test('a keyword MOPAC does not know is reported with the keywords code', async (
   expect(error.message).toContain('NOSUCHKEYWORD');
 });
 
-test('DEBUG turns an unknown keyword into a reported one instead of a failure', async () => {
-  // wrtkey.f stops on an unrecognised keyword UNLESS DEBUG is set, and ALLVEC
-  // needs DEBUG — so a typo would otherwise pass unnoticed. It comes back in
-  // `unknownKeywords`.
+test('a keyword MOPAC does not know stops the run, and the error names it', async () => {
+  const error = await catchMopac7ErrorAsync(() =>
+    mopac7({ ...MOLECULES.water, keywords: ['NOSUCHKEYWORD'] }),
+  );
+
+  expect(error.code).toBe('keywords');
+  expect(error.message).toBe(
+    'MOPAC stopped: UNRECOGNIZED KEY-WORDS: ( NOSUCHKEYWORD)',
+  );
+});
+
+test('DEBUG reports an unknown keyword instead of stopping, and keeps ALLVEC', async () => {
+  // wrtkey.f stops on a keyword it does not consume unless DEBUG is set, in
+  // which case it lists them and carries on.
   const result = await mopac7({
     ...MOLECULES.water,
-    keywords: ['NOSUCHKEYWORD'],
+    keywords: ['DEBUG', 'NOSUCHKEYWORD'],
   });
 
   expect(result.unknownKeywords).toStrictEqual(['NOSUCHKEYWORD']);
   expect(result.heatOfFormation).toBe(-59.17072);
+});
+
+test('an amide runs by default, and says why when MOPAC is given neither keyword', async () => {
+  // moldat.f finds the H-N-C=O group in formamide and stops on it unless the
+  // deck carries MMOK or NOMM. Every deck this package builds carries one.
+  const result = await mopac7(EXTRA_MOLECULES.formamide);
+
+  expect(result.heatOfFormation).toBe(-43.25785);
+  expect(result.ionizationPotential).toBe(10.67583);
+
+  const bare = buildMopac7Input(EXTRA_MOLECULES.formamide).replace(' MMOK', '');
+  const job = await runMopac7Job(bare);
+  const error = catchMopac7Error(() => parseMopac7Output(job.listing));
+
+  expect(error.code).toBe('keywords');
+  expect(error.message).toBe(
+    'MOPAC stopped: THIS SYSTEM CONTAINS -HNCO- GROUPS. / ' +
+      'YOU MUST SPECIFY "NOMM" OR "MMOK" REGARDING MOLECULAR MECHANICS CORRECTION',
+  );
+});
+
+test('six amide groups in one system are still six amide groups', async () => {
+  // moldat.f fills NHCO(4,120) two entries per amide N-H, with the bound check
+  // patches/fortran/0012-nhco-bound.patch adds; the archive's NHCO(4,20) ran out
+  // at five formamides and the twenty-first write landed on NNHCO itself.
+  const elements: string[] = [];
+  const coordinates: number[][] = [];
+  for (let copy = 0; copy < 6; copy++) {
+    for (let atom = 0; atom < 6; atom++) {
+      elements.push(EXTRA_MOLECULES.formamide.elements[atom] as string);
+      const row = EXTRA_MOLECULES.formamide.coordinates[atom] as number[];
+      coordinates.push([
+        (row[0] as number) + copy * 12,
+        row[1] as number,
+        row[2] as number,
+      ]);
+    }
+  }
+  const six = await mopac7({ elements, coordinates });
+  const one = await mopac7(EXTRA_MOLECULES.formamide);
+
+  expect(elements).toHaveLength(36);
+  expect(six.basis).toHaveLength(6 * 15);
+  expect(one.heatOfFormation).toBe(-43.25785);
+  // Twelve angstrom apart, so six of them are six times one of them but for
+  // 0.06 kcal/mol per copy of residual electrostatics.
+  expect(six.heatOfFormation).toBe(-259.21089);
+});
+
+test('MMOK and NOMM differ in the heat of formation and in nothing else', async () => {
+  const mmok = await mopac7(EXTRA_MOLECULES.formamide);
+  const nomm = await mopac7({
+    ...EXTRA_MOLECULES.formamide,
+    amideCorrection: 'nomm',
+  });
+
+  expect(mmok.orbitals).toStrictEqual(nomm.orbitals);
+  expect(Array.from(mmok.coefficients)).toStrictEqual(
+    Array.from(nomm.coefficients),
+  );
+  expect(Array.from(mmok.charges)).toStrictEqual(Array.from(nomm.charges));
+  expect(mmok.totalEnergy).toBe(nomm.totalEnergy);
 });
 
 test('an SCF that cannot converge throws with the scf code and keeps the listing', async () => {

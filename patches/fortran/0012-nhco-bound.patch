@@ -1,0 +1,161 @@
+Subject: moldat.f and the seven files sharing COMMON /MOLMEC/: bound NHCO
+
+WHAT IT FIXES
+  MOPAC 7 finds the peptide torsions it will correct by walking the geometry
+  for `O=C-N-H` and filling
+
+      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
+
+  two entries at a time, with no bound check anywhere in the loop:
+
+                     NNHCO=NNHCO+1
+                     NHCO(1,NNHCO)=I
+
+  Twenty entries is ten amide N-H bonds. The twenty-first write lands on the
+  word directly after the array, which is NNHCO itself, and the ones after
+  that leave the COMMON block. Nothing reports it, and the run continues.
+
+  Measured on this build, AM1, clusters of formamide (two amide N-H each, so
+  four entries each) at 12 A separation, and controls that hold the system
+  size fixed while changing only the number of entries:
+
+      5 formamide + 1 benzene      20 entries  42 atoms   -193.60094 kcal/mol
+      5 formamide + 2 benzene      20 entries  54 atoms   -171.15896 kcal/mol
+      5 formamide + 1 NMA          22 entries  42 atoms  NOMM +4282.88497
+      6 formamide                  24 entries  36 atoms  NOMM +5926.74987
+
+  Under NOMM the heat of formation comes back positive by four thousand
+  kcal/mol with no warning of any kind; under MMOK the SCF does not converge
+  and MOPAC stops. The break is exactly at twenty entries and does not move
+  with the atom count, so it is the array bound and not the chemistry.
+
+  It is reachable by any peptide with more than ten unmethylated amide
+  linkages -- a twelve-residue polyglycine is 48 heavy atoms and 38
+  hydrogens, well inside this build.
+
+WHAT IT DOES
+  Raises NHCO to 120 entries, which is sixty amide N-H bonds and therefore
+  more than any molecule this build can hold (each needs its own hydrogen,
+  and MAXLIT is 56), in all eight files that declare COMMON /MOLMEC/ -- the
+  block must stay one layout, which is what patch 0007 is about. The array is
+  INTEGER and uninitialised, so it costs 1,600 bytes of .bss and nothing in
+  the binary.
+
+  Adds the bound check the loop never had, so that a SIZES raised past this
+  one halts with its reason printed instead of writing over NNHCO. The label
+  is 175, which was free, and the GOTO 225 around it keeps the normal path at
+  one unconditional branch.
+
+--- a/compfg.f
++++ b/compfg.f
+@@ -21,7 +21,7 @@
+       COMMON /LAST  / LAST
+       COMMON /NUMCAL/ NUMCAL
+       COMMON /SCFTYP/ EMIN, LIMSCF
+-      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
++      COMMON /MOLMEC/ HTYPE(4),NHCO(4,120),NNHCO,ITYPE
+      1       /MOLKST/ NUMAT,NAT(NUMATM),NFIRST(NUMATM),NMIDLE(NUMATM),
+      2                NLAST(NUMATM), NORBS, NELECS,NALPHA,NBETA,
+      3                NCLOSE,NOPEN,NDUMY,FRACT
+--- a/dcart.f
++++ b/dcart.f
+@@ -17,7 +17,7 @@
+ C***********************************************************************
+       COMMON /KEYWRD/ KEYWRD
+       COMMON /EULER / TVEC(3,3), ID
+-      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
++      COMMON /MOLMEC/ HTYPE(4),NHCO(4,120),NNHCO,ITYPE
+       COMMON /UCELL / L1L,L2L,L3L,L1U,L2U,L3U
+       COMMON /DCARTC/ K1L,K2L,K3L,K1U,K2U,K3U
+       COMMON /NUMCAL/ NUMCAL
+--- a/dipind.f
++++ b/dipind.f
+@@ -7,7 +7,7 @@
+       INCLUDE 'SIZES'
+       COMMON /CORE  / CORE(107)
+       COMMON /DENSTY/ P(MPACK),PA(MPACK),PB(MPACK)
+-      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
++      COMMON /MOLMEC/ HTYPE(4),NHCO(4,120),NNHCO,ITYPE
+       COMMON /GEOM  / GEO(3,NUMATM)
+       COMMON /MOLKST/ NUMAT,NAT(NUMATM),NFIRST(NUMATM),NMIDLE(NUMATM),
+      1                NLAST(NUMATM),NORBS,NELECS,NALPHA,NBETA,
+--- a/dipole.f
++++ b/dipole.f
+@@ -6,7 +6,7 @@
+      2                NCLOSE,NOPEN,NDUMY,FRACT
+       COMMON /DIPSTO/ UX,UY,UZ,CH(NUMATM)
+       COMMON /KEYWRD/ KEYWRD
+-      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
++      COMMON /MOLMEC/ HTYPE(4),NHCO(4,120),NNHCO,ITYPE
+       COMMON /ISTOPE/ AMS(107)
+       COMMON /MULTIP/ DD(107), QQ(107), AM(107), AD(107), AQ(107)
+       COMMON /NUMCAL/ NUMCAL
+--- a/fock2.f
++++ b/fock2.f
+@@ -16,7 +16,7 @@
+ C  ON OUTPUT F   = PARTIAL FOCK MATRIX
+ C***********************************************************************
+       COMMON /EULER / TVEC(3,3), ID
+-      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
++      COMMON /MOLMEC/ HTYPE(4),NHCO(4,120),NNHCO,ITYPE
+       COMMON /NUMCAL/ NUMCAL
+       COMMON /KEYWRD/ KEYWRD
+       COMMON /WORK4 / PTOT2
+--- a/h1elec.f
++++ b/h1elec.f
+@@ -14,7 +14,7 @@
+ C
+ C***********************************************************************
+       COMMON /BETAS / BETAS(107),BETAP(107),BETAD(107)
+-      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
++      COMMON /MOLMEC/ HTYPE(4),NHCO(4,120),NNHCO,ITYPE
+       COMMON /BETA3 / BETA3(153)
+       COMMON /KEYWRD/ KEYWRD
+       COMMON /EULER / TVEC(3,3), ID
+--- a/rotate.f
++++ b/rotate.f
+@@ -33,7 +33,7 @@
+ C***********************************************************************
+       COMMON /NUMCAL/ NUMCAL
+       SAVE ANALYT, ICALCN
+-      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
++      COMMON /MOLMEC/ HTYPE(4),NHCO(4,120),NNHCO,ITYPE
+       CHARACTER*241 KEYWRD
+       LOGICAL SI,SJ, ANALYT
+       COMMON /NATORB/ NATORB(107)
+--- a/moldat.f
++++ b/moldat.f
+@@ -3,7 +3,7 @@
+       INCLUDE 'SIZES'
+       COMMON /GEOKST/ NATOMS,LABELS(NUMATM),
+      1                NA(NUMATM),NB(NUMATM),NC(NUMATM)
+-      COMMON /MOLMEC/ HTYPE(4),NHCO(4,20),NNHCO,ITYPE
++      COMMON /MOLMEC/ HTYPE(4),NHCO(4,120),NNHCO,ITYPE
+       COMMON /MOLKST/ NUMAT,NAT(NUMATM),NFIRST(NUMATM),NMIDLE(NUMATM),
+      1                NLAST(NUMATM), NORBS, NELECS,NALPHA,NBETA,
+      2                NCLOSE,NOPEN,NDUMY,FRACT
+@@ -598,6 +598,7 @@
+                      MK=MAX(M,K)
+                      KM=M+K-MK
+                      IF(RXYZ((MK*(MK-1))/2+KM).GT.1.7)GOTO 180
++                     IF(NNHCO+2 .GT. 120) GOTO 175
+                      NNHCO=NNHCO+1
+                      NHCO(1,NNHCO)=I
+                      NHCO(2,NNHCO)=J
+@@ -614,6 +615,16 @@
+   200       CONTINUE
+   210    CONTINUE
+   220 CONTINUE
++      GOTO 225
++C
++C   NHCO HOLDS 120 ENTRIES, WHICH IS TWO PER AMIDE N-H, SO 60 GROUPS.
++C   THE LOOP ABOVE HAD NO BOUND CHECK AND WROTE PAST THE END OF THE
++C   COMMON BLOCK, ONTO NNHCO ITSELF.
++C
++  175 WRITE(6,'(A)')' THIS SYSTEM CONTAINS MORE THAN 60 -HNCO- GROUPS.'
++      WRITE(6,'(A)')' THE MOLECULAR MECHANICS CORRECTION HOLDS NO MORE'
++      STOP
++  225 CONTINUE
+       IF(MODE.NE.1.AND.NNHCO.NE.0)THEN
+          IF(INDEX(KEYWRD,'MMOK').NE.0) THEN
+             WRITE(6,'(A)')' MOLECULAR MECHANICS CORRECTION APPLIED TO PE

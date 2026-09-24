@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { expect, test } from 'vitest';
 
 import { buildMopac7Input } from '../input/buildMopac7Input.ts';
+import { MOPAC7_LIMITS } from '../limits.ts';
 
 import { catchMopac7Error } from './catchMopac7Error.ts';
 import { MOLECULES } from './molecules.ts';
@@ -45,7 +46,7 @@ test('water is written as a Z-matrix, because MOPAC reads three atoms that way w
 
   expect(deck).toBe(
     [
-      'AM1 1SCF XYZ VECTORS ALLVEC DEBUG PRECISE GEO-OK CHARGE=0',
+      'AM1 1SCF XYZ VECTORS ALLVEC PRECISE GEO-OK CHARGE=0 MMOK',
       'mopac7-wasm',
       ' ',
       ' O      0.00000000 0     0.00000000 0     0.00000000 0   0   0   0',
@@ -93,7 +94,7 @@ test('the keyword line follows the options', () => {
   const water = MOLECULES.water;
 
   expect(buildMopac7Input({ ...water, method: 'MNDO' }).split('\n', 1)[0]).toBe(
-    'MNDO 1SCF XYZ VECTORS ALLVEC DEBUG PRECISE GEO-OK CHARGE=0',
+    'MNDO 1SCF XYZ VECTORS ALLVEC PRECISE GEO-OK CHARGE=0 MMOK',
   );
   expect(
     buildMopac7Input({
@@ -105,14 +106,14 @@ test('the keyword line follows the options', () => {
       charge: -1,
       spin: 'doublet',
     }).split('\n', 1)[0],
-  ).toBe('MINDO3 XYZ VECTORS GEO-OK CHARGE=-1 DOUBLET');
+  ).toBe('MINDO3 XYZ VECTORS GEO-OK CHARGE=-1 DOUBLET MMOK');
   expect(
     buildMopac7Input({ ...water, keywords: ['MULLIK', 'BONDS'] }).split(
       '\n',
       1,
     )[0],
   ).toBe(
-    'AM1 1SCF XYZ VECTORS ALLVEC DEBUG PRECISE GEO-OK CHARGE=0 MULLIK BONDS',
+    'AM1 1SCF XYZ VECTORS ALLVEC PRECISE GEO-OK CHARGE=0 MMOK MULLIK BONDS',
   );
   expect(
     buildMopac7Input({ ...water, title: 'my run' }).split('\n', 2)[1],
@@ -168,13 +169,14 @@ test('an element the hamiltonian has no parameters for names the ones it does ha
   // The same molecule is fine under AM1, which does carry lithium.
   expect(
     buildMopac7Input({ ...lithiumHydride, method: 'AM1' }).split('\n', 1)[0],
-  ).toBe('AM1 1SCF XYZ VECTORS ALLVEC DEBUG PRECISE GEO-OK CHARGE=0');
+  ).toBe('AM1 1SCF XYZ VECTORS ALLVEC PRECISE GEO-OK CHARGE=0 MMOK');
 });
 
 test('a molecule past the compiled array bounds is refused with the bound in the message', () => {
+  const heavy = MOPAC7_LIMITS.maxHeavyAtoms + 1;
   const elements: string[] = [];
   const coordinates: number[][] = [];
-  for (let index = 0; index < 31; index++) {
+  for (let index = 0; index < heavy; index++) {
     elements.push('C');
     coordinates.push([index * 1.5, 0.1 * index, 0]);
   }
@@ -184,6 +186,6 @@ test('a molecule past the compiled array bounds is refused with the bound in the
 
   expect(error.code).toBe('input');
   expect(error.message).toBe(
-    '31 non-hydrogen atoms, and this build of MOPAC 7 holds at most 30',
+    `${heavy} non-hydrogen atoms, and this build of MOPAC 7 holds at most ${MOPAC7_LIMITS.maxHeavyAtoms}`,
   );
 });

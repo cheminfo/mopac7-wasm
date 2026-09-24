@@ -1,0 +1,53 @@
+Subject: SIZES: MAXHEV=64, MAXLIT=56, so the build holds paclitaxel
+
+WHAT IT CHANGES
+  The two numbers a MOPAC 7 programmer sets. Everything else in SIZES is
+  derived from them, so this one line is the whole change:
+
+      NUMATM = MAXHEV + MAXLIT        60 -> 120 atoms
+      MAXORB = 4*MAXHEV + MAXLIT     150 -> 312 atomic orbitals
+
+  The 1993 archive ships 30/30, which is 60 atoms and a 150-orbital basis:
+  caffeine fits, ibuprofen fits, and nothing a student would call a drug
+  does. Paclitaxel is 62 heavy atoms, 51 hydrogens, 113 atoms, 299 orbitals,
+  and it is the molecule this pair was chosen for -- 64/56 is the smallest
+  round pair that holds it, with 2 heavy atoms and 5 hydrogens of headroom.
+
+WHY NOT LARGER
+  MOPAC's arrays are uninitialised COMMON, so they never appear in the
+  binary: 30/30 -> 64/56 costs 1,525 bytes of .wasm raw and about 97 bytes
+  of the compressed payload a browser downloads. What it costs is the memory the module DECLARES, because
+  emscripten must size the initial memory to fit static data + stack + heap
+  base, and MOPAC's static data is the COMMON blocks:
+
+      30/30    1007 pages =  62.94 MiB
+      64/56    1399 pages =  87.44 MiB       +24.50 MiB
+      90/120   2199 pages = 137.44 MiB       +74.50 MiB
+
+  That is address space, not residency -- .bss pages that are never touched
+  never fault in -- but it is address space a phone has to reserve at
+  instantiation, and runMopac7Job builds a fresh instance per call. 80/80
+  declares 108 MiB and 90/120 declares 137 MiB, both past where a small
+  phone is comfortable, and neither buys a molecule anyone asked for. 64/56
+  buys paclitaxel for 24 MiB.
+
+  MAXLIT is the cheap axis (it enters MAXORB with weight 1 against MAXHEV's
+  4, and N2ELEC linearly rather than quadratically), which is why the pair is
+  64/56 and not 60/60: 4 more heavy atoms for 4 fewer hydrogens is what
+  paclitaxel's 62/51 asks for.
+
+  src/limits.ts carries the same four numbers and src/__tests__/wasmPayload
+  asserts them against wasm/BUILD.json, which scripts/embed-wasm.mjs reads
+  back out of this file -- so this line and the TypeScript cannot drift.
+
+--- a/SIZES
++++ b/SIZES
+@@ -10,7 +10,7 @@
+ *     ISYBYL = 1 IF MOPAC IS TO BE USED IN THE SYBYL PACKAGE, =0 OTHERWISE
+ *     SEE ALSO NMECI, NPULAY AND MESP AT THE END OF THIS FILE
+ *                                                                       
+-      PARAMETER (MAXHEV=30, MAXLIT=30)
++      PARAMETER (MAXHEV=64, MAXLIT=56)
+       PARAMETER (MAXTIM=3600, MAXDMP=3600)
+       PARAMETER (ISYBYL=1)
+ *                                                                       

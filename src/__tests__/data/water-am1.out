@@ -6,8 +6,9 @@
 
 
  *******************************************************************************
- *          MOPAC:  VERSION  7.00               CALC'D. Thu Sep 24 14:59:03 2026
+ *          MOPAC:  VERSION  7.00               CALC'D. Thu Sep 24 19:15:39 2026
  *  VECTORS  - FINAL EIGENVECTORS TO BE PRINTED
+ *  ALLVEC   - EVERY EIGENVECTOR TO BE PRINTED
  *  GEO-OK   - OVERRIDE INTERATOMIC DISTANCE CHECK
  *   XYZ     - CARTESIAN COORDINATE SYSTEM TO BE USED
  *  DEBUG    - DEBUG OPTION TURNED ON
@@ -23,8 +24,7 @@
  *  1SCF     - DO 1 SCF AND THEN STOP 
  *  AM1      - THE AM1 HAMILTONIAN TO BE USED
  *  PRECISE  - CRITERIA TO BE INCREASED BY 100 TIMES
- *  DEBUG KEYWORDS USED:   ALLVEC
- ***********************************************************************030BY030
+ ***********************************************************************064BY056
  AM1 1SCF XYZ VECTORS ALLVEC DEBUG PRECISE GEO-OK CHARGE=0
  water AM1
  
@@ -275,7 +275,7 @@
 
                                 AM1    CALCULATION
                                                        VERSION  7.00
-                                                       Thu Sep 24 14:59:03 2026
+                                                       Thu Sep 24 19:15:39 2026
 
 
 

@@ -2,7 +2,6 @@ import { expect, test } from 'vitest';
 
 import { parseMopac7Output } from '../output/parseMopac7Output.ts';
 
-import { catchMopac7Error } from './catchMopac7Error.ts';
 import { EXPECTED } from './expected.ts';
 import { listing } from './listing.ts';
 
@@ -166,34 +165,6 @@ test('benzene AM1: the basis runs six carbons then six hydrogens', () => {
   expect(result.charges).toHaveLength(12);
   expect(result.charges[0]).toBe(-0.1292);
   expect(result.charges[6]).toBe(0.1292);
-});
-
-test('a listing that stops before the SCF throws with the scf code', () => {
-  const truncated = listing('water-am1.out').split(
-    'SCF FIELD WAS ACHIEVED',
-    1,
-  )[0] as string;
-  const error = catchMopac7Error(() => parseMopac7Output(truncated));
-
-  expect(error.code).toBe('scf');
-  expect(error.message).toContain('SCF FIELD WAS ACHIEVED');
-});
-
-test('a listing with no eigenvector block throws with the parse code', () => {
-  const stripped = listing('water-am1.out')
-    .split('\n')
-    .filter((line) => !/^\s*EIGENVECTORS\s*$/.test(line))
-    .join('\n');
-  const error = catchMopac7Error(() => parseMopac7Output(stripped));
-
-  expect(error.code).toBe('parse');
-  expect(error.message).toContain('VECTORS');
-});
-
-test('an empty listing throws rather than returning zeroes', () => {
-  const error = catchMopac7Error(() => parseMopac7Output(''));
-
-  expect(error.code).toBe('scf');
 });
 
 /**

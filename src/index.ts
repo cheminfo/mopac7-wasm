@@ -11,6 +11,7 @@ export { parseMopac7Output } from './output/parseMopac7Output.ts';
 export { compileMopac7 } from './wasm/compileMopac7.ts';
 export { runMopac7Job } from './wasm/runMopac7Job.ts';
 export type {
+  Mopac7AmideCorrection,
   Mopac7AtomicOrbital,
   Mopac7Dipole,
   Mopac7ErrorCode,

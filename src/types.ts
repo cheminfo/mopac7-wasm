@@ -9,18 +9,45 @@ export type Mopac7Spin =
 export type Mopac7ErrorCode =
   /** The options are wrong before MOPAC is even started: unknown element, bad coordinate count, over the built-in size limit. */
   | 'input'
-  /** MOPAC printed `UNRECOGNIZED KEY-WORDS`. */
+  /** MOPAC rejected the keyword line: a word it does not know, two that conflict, or one it demanded and did not get. */
   | 'keywords'
   /** MOPAC rejected the geometry (`GEOMETRY IS FAULTY`, collinear first three atoms, …). */
   | 'geometry'
   /** The hamiltonian has no parameters for one of the elements. */
   | 'parameters'
+  /** The molecule is past an array bound the binary was compiled with, and MOPAC said so itself. */
+  | 'limits'
   /** The SCF did not converge. */
   | 'scf'
+  /** MOPAC stopped for a reason it stated in the listing that is none of the above; the message quotes it. */
+  | 'halt'
   /** The WebAssembly module trapped, or `main` threw. */
   | 'aborted'
-  /** The run finished but the listing lacks a block the result needs. */
+  /** The run finished but the listing lacks a block the result needs, or does not add up. */
   | 'parse';
+
+/**
+ * MOPAC 7's molecular-mechanics correction to the peptide (`-HNCO-`) torsion,
+ * as its own two keywords.
+ *
+ * `moldat.f` searches the geometry for `H-N-C=O` groups and **stops** on the
+ * first one it finds unless the deck names one of these two, so every deck this
+ * package builds carries one.
+ *
+ * - `'mmok'` writes `MMOK`, which adds `HTYPE * sin²(H-N-C=O)` per torsion to
+ *   the heat of formation and to the Cartesian gradient (`compfg.f`,
+ *   `dcart.f`), with `HTYPE` 6.1737 kcal/mol for MNDO, 3.3191 for AM1, 7.1853
+ *   for PM3 and 1.7712 for MINDO/3. It is zero for a planar amide and largest
+ *   for a twisted one, which is the rotation barrier NDDO underestimates.
+ * - `'nomm'` writes `NOMM`, which leaves the heat of formation alone.
+ *
+ * The term is added **after** the SCF and never enters the Fock matrix, so the
+ * choice moves {@link Mopac7Result.heatOfFormation} and nothing else: over
+ * formamide, acetamide, N-methylacetamide, glycylglycine and benzene at AM1,
+ * every orbital energy, every coefficient and every Mulliken charge comes back
+ * identical under the two.
+ */
+export type Mopac7AmideCorrection = 'mmok' | 'nomm';
 
 /** A molecule and the calculation to run on it. */
 export interface Mopac7Options {
@@ -58,11 +85,26 @@ export interface Mopac7Options {
   optimize?: boolean;
   /**
    * Print every molecular orbital instead of a window around the HOMO. Adds
-   * `ALLVEC DEBUG`, which is what makes {@link Mopac7Result.coefficients}
-   * complete, at the cost of a much longer listing.
+   * `ALLVEC`, which is what makes {@link Mopac7Result.coefficients} complete.
    * @default true
    */
   allOrbitals?: boolean;
+  /**
+   * Which of MOPAC 7's two peptide keywords the deck carries. One of them is
+   * always written, because MOPAC stops on any molecule holding an `-HNCO-`
+   * group when the deck names neither — so without this every amide, peptide
+   * and most drugs would fail.
+   *
+   * `'mmok'` is the default because it is the correction MOPAC itself asks for
+   * (its `NOMM` branch prints "IF YOU WANT MM CORRECTION TO THE CONH BARRIER,
+   * ADD THE KEY-WORD MMOK"), and because it is what the keyword exists to fix:
+   * on a rigid AM1 torsion scan of N-methylacetamide the rotation barrier is
+   * 13.18 kcal/mol under `NOMM` and 19.42 under `MMOK`, against an experimental
+   * amide barrier near 16–22. It costs nothing anywhere else — see
+   * {@link Mopac7AmideCorrection}.
+   * @default 'mmok'
+   */
+  amideCorrection?: Mopac7AmideCorrection;
   /**
    * Tighten MOPAC's SCF and gradient criteria (`PRECISE`).
    * @default true
@@ -178,7 +220,13 @@ export interface Mopac7Result {
 
   /** MOPAC's self-reported `COMPUTATION TIME` in seconds. Always `0` here: the wasm build has no working CPU clock. */
   computationTimeSeconds: number;
-  /** Keywords MOPAC did not recognise and let through because `DEBUG` was set. */
+  /**
+   * Keywords MOPAC did not recognise and let through because `DEBUG` was set.
+   * The decks this package builds do not carry `DEBUG`, so this is empty unless
+   * the caller put it in {@link Mopac7Options.keywords} — without it MOPAC
+   * stops on a keyword it does not know, and the call throws with
+   * `code: 'keywords'` instead.
+   */
   unknownKeywords: string[];
 }
 

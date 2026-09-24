@@ -1,7 +1,8 @@
 import { Mopac7Error } from '../Mopac7Error.ts';
 import type { Mopac7AtomicOrbital, Mopac7Orbital } from '../types.ts';
 
-import { FIELD_START, readNumbers, tryNumbers } from './fields.ts';
+import { readAtomicOrbital } from './atomicOrbitalLabel.ts';
+import { readNumbers, tryNumbers } from './fields.ts';
 import { normalizeOrbitalPhases } from './normalizeOrbitalPhases.ts';
 
 /** The molecular orbitals, their basis, and the coefficient matrix between them. */
@@ -16,11 +17,11 @@ export interface Mopac7Eigenvectors {
  * energy and symmetry label, the atomic orbital basis, and the coefficient of
  * each atomic orbital in each molecular orbital.
  *
- * MOPAC prints the block in groups of up to eight roots, and — because
- * `ALLVEC` needs `DEBUG` to be accepted at all — it also dumps one
- * "EIGENVECTORS AND EIGENVALUES ON ITERATION n" matrix per SCF iteration
- * beforehand. Only the last block, the one headed by a bare `EIGENVECTORS`, is
- * the converged one.
+ * MOPAC prints the block in groups of up to eight roots. A deck carrying
+ * `DEBUG` also dumps one "EIGENVECTORS AND EIGENVALUES ON ITERATION n" matrix
+ * per SCF iteration beforehand; only the last block, the one headed by a bare
+ * `EIGENVECTORS`, is the converged one, and it is the one read here whether or
+ * not the others are there.
  *
  * The coefficients are returned with their phases pinned by
  * {@link normalizeOrbitalPhases} — the largest coefficient of each orbital is
@@ -89,9 +90,20 @@ export function parseEigenvectors(
       throw new Mopac7Error(
         'parse',
         `MOPAC printed root ${String(roots[index])} where root ${index + 1} was expected, so this is ` +
-          'a window of the spectrum and not the whole of it; the deck needs the ALLVEC and DEBUG keywords',
+          'a window of the spectrum and not the whole of it; the deck needs the ALLVEC keyword',
       );
     }
+  }
+  // The eigenvector matrix is NORBS x NORBS, so a listing that printed more
+  // roots than it printed rows lost rows. This is the check that would have
+  // caught the >99-atom truncation: every root group stopped at the same row,
+  // so the per-orbital width test below compared two equally short things.
+  if (columns.length !== basis.length) {
+    throw new Mopac7Error(
+      'parse',
+      `MOPAC printed ${columns.length} molecular orbitals over a basis of ${basis.length} atomic orbitals, ` +
+        'and the eigenvector matrix is square, so the listing was not read to the end',
+    );
   }
 
   const orbitals: Mopac7Orbital[] = [];
@@ -117,10 +129,6 @@ export function parseEigenvectors(
   normalizeOrbitalPhases(coefficients, basis.length);
   return { orbitals, basis, coefficients };
 }
-
-/** A coefficient row's label part: orbital type, element symbol, atom number. */
-const AO_LABEL =
-  /^\s*(?<type>[A-Za-z][A-Za-z\d]*)\s+(?<element>[A-Za-z]{1,2})\s+(?<atom>\d+)\s*$/;
 
 function findLastBlock(lines: readonly string[]): number {
   for (let index = lines.length - 1; index >= 0; index--) {
@@ -183,21 +191,10 @@ function readCoefficientRows(
   for (let index = from; index < lines.length; index++) {
     const line = lines[index] as string;
     if (line.trim().length === 0) continue;
-    const label = AO_LABEL.exec(line.slice(0, FIELD_START));
-    if (label?.groups === undefined) break;
+    const atomicOrbital = readAtomicOrbital(line);
+    if (atomicOrbital === null) break;
     const values = readNumbers(line, count);
-    const { type, element, atom } = label.groups;
-    if ([type, element, atom].includes(undefined)) {
-      throw new Mopac7Error(
-        'parse',
-        `the coefficient row "${line.trim()}" has no atomic orbital label`,
-      );
-    }
-    atomicOrbitals.push({
-      atomIndex: Number(atom) - 1,
-      element: element as string,
-      type: type as string,
-    });
+    atomicOrbitals.push(atomicOrbital);
     for (let k = 0; k < count; k++) {
       (rows[k] as number[]).push(values[k] as number);
     }

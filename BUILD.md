@@ -37,10 +37,10 @@ At the default `-Os`:
 
 | file           |         raw |     gzip -9 |  brotli -11 |
 | -------------- | ----------: | ----------: | ----------: |
-| `mopac7.wasm`  |     790,343 |     306,172 |     257,107 |
+| `mopac7.wasm`  |     792,215 |     306,481 |     257,703 |
 | `mopac7.mjs`   |      65,122 |      18,149 |      16,227 |
-| **total**      | **855,465** | **324,592** | **273,731** |
-| `wasm/data.js` |     408,404 |           — |           — |
+| **total**      | **857,337** | **324,895** | **274,128** |
+| `wasm/data.js` |     408,816 |           — |           — |
 | `wasm/glue.js` |      65,325 |           — |           — |
 
 `data.js` is the gzipped binary written out as base64, so it is larger than the
@@ -74,14 +74,16 @@ occupied valence levels of the 42 verification decks, bit for bit.
 | ------------------ | ----------: | ----------: | ----------: | ----------: | ----------: | ----------: | ----------: | ----------: |
 | `O3`               |     990,691 |     353,710 |     291,189 |     0.54 ms |     1.65 ms |     3.28 ms |     6.60 ms |     9.64 ms |
 | `O2`               |     967,894 |     342,751 |     286,123 |     0.52 ms |     1.85 ms |     3.19 ms |     6.43 ms |     9.47 ms |
-| **`Os` (default)** | **790,343** | **306,172** | **257,107** | **0.54 ms** | **1.70 ms** | **3.30 ms** | **6.67 ms** | **9.95 ms** |
+| **`Os` (default)** | **792,215** | **306,481** | **257,703** | **0.55 ms** | **2.11 ms** | **3.54 ms** | **6.46 ms** | **9.45 ms** |
 | `Oz`               |     773,557 |     293,250 |     246,684 |     0.55 ms |     1.99 ms |     3.70 ms |     8.86 ms |     9.92 ms |
 
 The `O3`, `O2` and `Oz` rows were measured before `_fflush` joined
 `EXPORTED_FUNCTIONS`, which adds four bytes to the module, and before
 `patches/fortran/0009`, which adds 796 bytes raw, 200 gzip and **saves** 333
-brotli; only the `-Os` row has been re-measured since, and the `-Os` timings
-predate 0009 as well. Patch 0009 adds one N-element norm and one N-element
+brotli; only the `-Os` row has been re-measured since, and its sizes also carry
+`0010` (the `ALLVEC` keyword), `0011` (`SIZES` 64/56) and `0012` (the `NHCO`
+bound), which between them add 1,872 bytes raw and 596 brotli. None of the five
+timing decks carries `ALLVEC` or `DEBUG`, so `0010` does not touch them. Patch 0009 adds one N-element norm and one N-element
 scaled copy per eigenvector against an O(N**3) Householder reduction, and no
 run-time difference was resolvable: interleaved in one process, 101 samples per
 arm, best-of, at load average 7.9, water was 0.59 ms against 0.59, benzene
@@ -111,7 +113,7 @@ computes.
    out to `1993_MOPAC7/` (8 MB fetched, not the 669 MB repository). The build
    checks the file count, a `sha256` over the whole subtree, and that the
    public-domain notice is still in `mopac.f`.
-4. **patches/fortran/** — eight changes to the Fortran, each documented in its
+4. **patches/fortran/** — eleven changes to the Fortran, each documented in its
    own file. See below.
 5. **f2c** — `-A -E -ec -I. -w`. Every flag is load-bearing and the reasons are
    in `scripts/build-wasm.sh`; the one to remember is that `-a` (automatic
@@ -170,6 +172,9 @@ sanitizer and f2c messages.
 | `fortran/0007-common-block-layout.patch`          | **real defect**: `/SYMOPS/`, `/SCRACH/` and `/SYMRES/` each declared two ways                                                                                                                                                                                                                      |
 | `c/0008-cdiag-conflicting-prototypes.patch`       | `cdiag.f`'s deliberate COMPLEX/REAL storage aliasing becomes `error: conflicting types` in one translation unit                                                                                                                                                                                    |
 | `fortran/0009-hqrii-degenerate-eigenvector.patch` | **real defect**: `HQRII`'s inverse iteration returns the same direction for both roots of a degenerate pair, the re-orthogonalisation then empties the second one, and the `1.D-24` floor in the normalisation hides it; the symptom is an all-zero eigenvector column and a `????` symmetry label |
+| `fortran/0010-wrtkey-allvec.patch`                | `matou1.f` implements the `ALLVEC` keyword and `wrtkey.f` never lists it, so the only way to print the whole eigenvector matrix was to add `DEBUG` as well — which is also what arms `iter.f`'s dump of that matrix on every SCF cycle, 22.2 MiB of it on paclitaxel                               |
+| `fortran/0011-sizes-64-56.patch`                  | `MAXHEV=64, MAXLIT=56` in `SIZES`: the smallest round pair that holds paclitaxel (62 heavy, 51 hydrogens, 299 orbitals), against the archive's 30/30                                                                                                                                               |
+| `fortran/0012-nhco-bound.patch`                   | **real defect**: `moldat.f` fills `NHCO(4,20)` in COMMON `/MOLMEC/` two entries per amide N-H with no bound check, so the eleventh amide writes over `NNHCO` itself; the symptom is a heat of formation four thousand kcal/mol out, silently                                                       |
 | `shim.c`                                          | `fdate_` and `myflsh_`, which libf2c does not have, and int-returning wrappers for `s_copy` / `s_cat` / `getenv_`, which libf2c declares `void` while f2c generates `int` callers                                                                                                                  |
 
 `shim.c` wraps the three libf2c routines by compiling them under private names
@@ -263,10 +268,40 @@ by `scripts/bench.mjs`. Both are plain MOPAC input, readable and editable.
 
 ## Limits inherited from the source
 
-`SIZES` is left exactly as the archive ships it: `MAXHEV=30, MAXLIT=30`, so at
-most **30 non-hydrogen atoms and 30 hydrogens**. Ibuprofen (15 + 18) and
-caffeine (14 + 10) fit comfortably. Raising those numbers is a one-line change
-to `SIZES`, but do not reach for it to make a molecule "work": it also moves
-where any remaining out-of-bounds write lands, which is exactly how this class
-of bug hides. The Ghemical packaging of 7.01 ships `60, 60`, and that alone made
-the ethene bug above disappear without fixing it.
+`SIZES` carries `MAXHEV=64, MAXLIT=56`, so at most **64 non-hydrogen atoms and
+56 hydrogens**, 120 atoms and a 312-orbital basis. The archive ships `30, 30`,
+which stops at caffeine; 64/56 is the smallest round pair that holds paclitaxel
+(62 + 51, 299 orbitals), and `patches/fortran/0011-sizes-64-56.patch` is the
+whole change — every other bound in `SIZES` is derived from those two.
+
+Measured through this pipeline, with the same patches on both sides so that
+`SIZES` is the only variable:
+
+|                           |                 30/30 |                     64/56 |      delta |
+| ------------------------- | --------------------: | ------------------------: | ---------: |
+| `mopac7.wasm`, raw        |               790,447 |                   791,972 | **+1,525** |
+| `mopac7.wasm`, gzip -9    |               306,266 |                   306,491 |       +225 |
+| `mopac7.wasm`, brotli -11 |               257,557 |                   257,548 |     **−9** |
+| declared initial memory   | 1007 pages, 62.94 MiB | 1399 pages, **87.44 MiB** | +24.50 MiB |
+| maximum memory            |                 2 GiB |                     2 GiB |          — |
+
+MOPAC's arrays are uninitialised COMMON, so they live in `.bss` and never
+appear in the binary: the download does not move and the declared memory does.
+That is address space rather than residency — the pages a run never touches
+never fault in, and a bare paclitaxel single point peaks at 119 MiB of process
+memory against a 79 MiB empty node — but it is address space the module asks
+for at every instantiation, and `runMopac7Job` builds a fresh instance per
+call. 80/80 would declare 108 MiB and 90/120 137 MiB, both past where a small
+phone is comfortable, and neither holds a molecule anyone asked for.
+
+The numbers are the same on both sides of that change. The 42 verification
+decks produce **byte-identical listings** at 30/30 and 64/56 but for the
+timestamp and the `030BY030`/`064BY056` banner, and the 64/56 module matches a
+native build of the 30/30 C to **exactly zero** on every field `verify.mjs`
+compares.
+
+Raising `SIZES` further is still a one-line change, but do not reach for it to
+make a molecule "work": it also moves where any remaining out-of-bounds write
+lands, which is exactly how this class of bug hides. The Ghemical packaging of
+7.01 ships `60, 60`, and that alone made the ethene bug above disappear without
+fixing it.

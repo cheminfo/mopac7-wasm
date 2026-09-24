@@ -11,6 +11,7 @@ import {
 import type { Point } from './geometry.ts';
 import { geometryBlock, needsDummyAtom } from './geometry.ts';
 import {
+  AMIDE_KEYWORDS,
   MAX_KEYWORD_LINE,
   SPIN_KEYWORDS,
   checkExtraKeyword,
@@ -27,6 +28,10 @@ import {
  * binary was compiled with, and — through {@link checkExtraKeyword} — an extra
  * keyword that would shift the deck's own lines or produce a listing this
  * package cannot read.
+ *
+ * The deck always carries one of `MMOK` and `NOMM`, because MOPAC 7 stops on
+ * any molecule holding an `-HNCO-` group when it is given neither. See
+ * {@link Mopac7Options.amideCorrection}.
  * @param options - The molecule and the calculation to run.
  * @returns The deck, ending in a newline.
  * @throws {Mopac7Error} With `code: 'input'` when the options cannot produce a valid deck.
@@ -39,11 +44,16 @@ export function buildMopac7Input(options: Mopac7Options): string {
   const keywords: string[] = [method];
   if (options.optimize !== true) keywords.push('1SCF');
   keywords.push('XYZ', 'VECTORS');
-  if (options.allOrbitals !== false) keywords.push('ALLVEC', 'DEBUG');
+  // ALLVEC alone is enough since patches/fortran/0010-wrtkey-allvec.patch: the
+  // archive's wrtkey.f never listed it, so it took DEBUG to get past
+  // "UNRECOGNIZED KEY-WORDS" -- and DEBUG is also what arms iter.f's
+  // per-iteration dump of the whole eigenvector matrix.
+  if (options.allOrbitals !== false) keywords.push('ALLVEC');
   if (options.precise !== false) keywords.push('PRECISE');
   keywords.push('GEO-OK', `CHARGE=${options.charge ?? 0}`);
   const spin = SPIN_KEYWORDS[options.spin ?? 'singlet'];
   if (spin !== null) keywords.push(spin);
+  keywords.push(AMIDE_KEYWORDS[options.amideCorrection ?? 'mmok']);
   for (const keyword of options.keywords ?? []) {
     keywords.push(checkExtraKeyword(keyword));
   }
