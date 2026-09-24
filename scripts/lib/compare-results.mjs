@@ -13,8 +13,14 @@
  * orbitals that share an energy, the individual vectors are only defined up to a
  * rotation of the set, so no convention pins them and two builds may
  * legitimately print different mixtures. The same goes for the symmetry label
- * `symtrz.f` assigns to such a root, and for a vector of the set that comes out
- * empty. Everything outside a degenerate set is a failure.
+ * `symtrz.f` assigns to such a root. Everything outside a degenerate set is a
+ * failure.
+ *
+ * A column that comes out empty is a failure wherever it appears, degenerate set
+ * or not: an eigenvector is normalised, so an all-zero one is not a rotation of
+ * anything, it is a diagonaliser that lost it. HQRII used to produce them, which
+ * `patches/fortran/0009-hqrii-degenerate-eigenvector.patch` fixes; this check is
+ * what keeps them gone.
  */
 
 import {
@@ -107,7 +113,8 @@ export function compareResults(got, want) {
         `over ${split.degenerateCount} values: the mixture inside a degenerate set is arbitrary`,
     );
   }
-  reportEmptyColumns(got, degenerate, problems, notes);
+  reportEmptyColumns(got, 'this build', problems);
+  reportEmptyColumns(want, 'the reference build', problems);
 
   return { ok: problems.length === 0, fields, problems, notes };
 }
@@ -150,7 +157,7 @@ function compareSymmetry(got, want, degenerate, problems, notes) {
   }
 }
 
-function reportEmptyColumns(result, degenerate, problems, notes) {
+function reportEmptyColumns(result, which, problems) {
   const size = result.basis.length;
   for (let mo = 0; mo < result.orbitals.length; mo++) {
     let sum = 0;
@@ -159,9 +166,9 @@ function reportEmptyColumns(result, degenerate, problems, notes) {
       sum += value * value;
     }
     if (Math.sqrt(sum) >= MIN_COLUMN_NORM) continue;
-    const line = `root ${mo + 1} (${result.orbitals[mo].energy} eV) has no eigenvector: its coefficients are all zero`;
-    if (degenerate[mo]) notes.push(line);
-    else problems.push(line);
+    problems.push(
+      `root ${mo + 1} (${result.orbitals[mo].energy} eV) has no eigenvector in ${which}: its coefficients are all zero`,
+    );
   }
 }
 

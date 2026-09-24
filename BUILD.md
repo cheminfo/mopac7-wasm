@@ -37,10 +37,10 @@ At the default `-Os`:
 
 | file           |         raw |     gzip -9 |  brotli -11 |
 | -------------- | ----------: | ----------: | ----------: |
-| `mopac7.wasm`  |     789,547 |     305,972 |     257,440 |
+| `mopac7.wasm`  |     790,343 |     306,172 |     257,107 |
 | `mopac7.mjs`   |      65,122 |      18,149 |      16,227 |
-| **total**      | **854,669** | **324,377** | **273,405** |
-| `wasm/data.js` |     408,136 |           — |           — |
+| **total**      | **855,465** | **324,592** | **273,731** |
+| `wasm/data.js` |     408,404 |           — |           — |
 | `wasm/glue.js` |      65,325 |           — |           — |
 
 `data.js` is the gzipped binary written out as base64, so it is larger than the
@@ -74,12 +74,18 @@ occupied valence levels of the 42 verification decks, bit for bit.
 | ------------------ | ----------: | ----------: | ----------: | ----------: | ----------: | ----------: | ----------: | ----------: |
 | `O3`               |     990,691 |     353,710 |     291,189 |     0.54 ms |     1.65 ms |     3.28 ms |     6.60 ms |     9.64 ms |
 | `O2`               |     967,894 |     342,751 |     286,123 |     0.52 ms |     1.85 ms |     3.19 ms |     6.43 ms |     9.47 ms |
-| **`Os` (default)** | **789,547** | **305,972** | **257,440** | **0.54 ms** | **1.70 ms** | **3.30 ms** | **6.67 ms** | **9.95 ms** |
+| **`Os` (default)** | **790,343** | **306,172** | **257,107** | **0.54 ms** | **1.70 ms** | **3.30 ms** | **6.67 ms** | **9.95 ms** |
 | `Oz`               |     773,557 |     293,250 |     246,684 |     0.55 ms |     1.99 ms |     3.70 ms |     8.86 ms |     9.92 ms |
 
-The `O3`, `O2` and `Oz` sizes were measured before `_fflush` joined
-`EXPORTED_FUNCTIONS`, which adds four bytes to the module; only the `-Os` row
-has been re-measured since. The timings are node 26 on an 8-core arm64 Mac, best
+The `O3`, `O2` and `Oz` rows were measured before `_fflush` joined
+`EXPORTED_FUNCTIONS`, which adds four bytes to the module, and before
+`patches/fortran/0009`, which adds 796 bytes raw, 200 gzip and **saves** 333
+brotli; only the `-Os` row has been re-measured since, and the `-Os` timings
+predate 0009 as well. Patch 0009 adds one N-element norm and one N-element
+scaled copy per eigenvector against an O(N**3) Householder reduction, and no
+run-time difference was resolvable: interleaved in one process, 101 samples per
+arm, best-of, at load average 7.9, water was 0.59 ms against 0.59, benzene
+1.36 against 1.36 and ibuprofen 8.95 against 9.00. The timings are node 26 on an 8-core arm64 Mac, best
 of 15 runs, one fresh module instance per run, clock over `callMain` only. **Best of**, not median: the calculation is
 deterministic, so the spread is scheduler noise and the fastest sample is the
 one least contaminated by it — medians on the same runs moved by up to 40 % with
@@ -105,7 +111,7 @@ computes.
    out to `1993_MOPAC7/` (8 MB fetched, not the 669 MB repository). The build
    checks the file count, a `sha256` over the whole subtree, and that the
    public-domain notice is still in `mopac.f`.
-4. **patches/fortran/** — seven changes to the Fortran, each documented in its
+4. **patches/fortran/** — eight changes to the Fortran, each documented in its
    own file. See below.
 5. **f2c** — `-A -E -ec -I. -w`. Every flag is load-bearing and the reasons are
    in `scripts/build-wasm.sh`; the one to remember is that `-a` (automatic
@@ -153,17 +159,18 @@ sanitizer and f2c messages.
 
 ## The patches
 
-| file                                           | what it fixes                                                                                                                                                                                         |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fortran/0001-ef-flush-extension.patch`        | `ef.f` both declares a COMMON block called FLUSH and calls a subroutine called FLUSH; f2c refuses the file, and libf2c's `flush_()` takes no argument                                                 |
-| `fortran/0002-ef-limscf-logical.patch`         | `LIMSCF` is used as a LOGICAL in `EFSTR` without being declared one; f2c: `impossible conversion`                                                                                                     |
-| `fortran/0003-second-argument-count.patch`     | `SECOND(1)` against `FUNCTION SECOND()` in 8 places                                                                                                                                                   |
-| `fortran/0004-consts-argument-count.patch`     | `CALL CONSTS(COORD,.TRUE.)` against `SUBROUTINE CONSTS(COORD)`                                                                                                                                        |
-| `fortran/0005-makpol-common-block-types.patch` | **real defect**: `makpol.f` leaves `SIMBOL` and `LTXT` to the implicit rules, so two COMMON blocks have a different layout there than everywhere else, and `/SIMBOL/` is 360 bytes short on every run |
-| `fortran/0006-symtrz-s00002-nadim.patch`       | **real defect**: ten of thirteen `/S00002/` declarations in `symtrz.f` omit `NADIM`, shifting every later member by one slot; the symptom is `MOLECULAR POINT GROUP : ????`                           |
-| `fortran/0007-common-block-layout.patch`       | **real defect**: `/SYMOPS/`, `/SCRACH/` and `/SYMRES/` each declared two ways                                                                                                                         |
-| `c/0008-cdiag-conflicting-prototypes.patch`    | `cdiag.f`'s deliberate COMPLEX/REAL storage aliasing becomes `error: conflicting types` in one translation unit                                                                                       |
-| `shim.c`                                       | `fdate_` and `myflsh_`, which libf2c does not have, and int-returning wrappers for `s_copy` / `s_cat` / `getenv_`, which libf2c declares `void` while f2c generates `int` callers                     |
+| file                                              | what it fixes                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fortran/0001-ef-flush-extension.patch`           | `ef.f` both declares a COMMON block called FLUSH and calls a subroutine called FLUSH; f2c refuses the file, and libf2c's `flush_()` takes no argument                                                                                                                                              |
+| `fortran/0002-ef-limscf-logical.patch`            | `LIMSCF` is used as a LOGICAL in `EFSTR` without being declared one; f2c: `impossible conversion`                                                                                                                                                                                                  |
+| `fortran/0003-second-argument-count.patch`        | `SECOND(1)` against `FUNCTION SECOND()` in 8 places                                                                                                                                                                                                                                                |
+| `fortran/0004-consts-argument-count.patch`        | `CALL CONSTS(COORD,.TRUE.)` against `SUBROUTINE CONSTS(COORD)`                                                                                                                                                                                                                                     |
+| `fortran/0005-makpol-common-block-types.patch`    | **real defect**: `makpol.f` leaves `SIMBOL` and `LTXT` to the implicit rules, so two COMMON blocks have a different layout there than everywhere else, and `/SIMBOL/` is 360 bytes short on every run                                                                                              |
+| `fortran/0006-symtrz-s00002-nadim.patch`          | **real defect**: ten of thirteen `/S00002/` declarations in `symtrz.f` omit `NADIM`, shifting every later member by one slot; the symptom is `MOLECULAR POINT GROUP : ????`                                                                                                                        |
+| `fortran/0007-common-block-layout.patch`          | **real defect**: `/SYMOPS/`, `/SCRACH/` and `/SYMRES/` each declared two ways                                                                                                                                                                                                                      |
+| `c/0008-cdiag-conflicting-prototypes.patch`       | `cdiag.f`'s deliberate COMPLEX/REAL storage aliasing becomes `error: conflicting types` in one translation unit                                                                                                                                                                                    |
+| `fortran/0009-hqrii-degenerate-eigenvector.patch` | **real defect**: `HQRII`'s inverse iteration returns the same direction for both roots of a degenerate pair, the re-orthogonalisation then empties the second one, and the `1.D-24` floor in the normalisation hides it; the symptom is an all-zero eigenvector column and a `????` symmetry label |
+| `shim.c`                                          | `fdate_` and `myflsh_`, which libf2c does not have, and int-returning wrappers for `s_copy` / `s_cat` / `getenv_`, which libf2c declares `void` while f2c generates `int` callers                                                                                                                  |
 
 `shim.c` wraps the three libf2c routines by compiling them under private names
 (`-Ds_copy=s_copy_impl`) rather than patching libf2c, so a netlib refresh of
@@ -201,12 +208,33 @@ rather than hiding them:
   parsed result by making each orbital's largest coefficient positive.
 - **The mixture inside a degenerate set**, which no phase convention can pin
   because only the set is defined, not its members. Degenerate coefficients
-  differ by up to **1.3** between the builds, and on AM1 hydrogen fluoride the
-  wasm build leaves one vector of the 1PI pair all zero, so `symtrz.f` labels
-  the pair `????` where native prints `1PI`. The same is true of the earlier,
-  independently linked wasm build under `out/energy-eval`, so it is a property of
-  the WebAssembly target rather than of this build. `verify.mjs` reports it as a
-  NOTE and fails on any such difference outside a degenerate set.
+  differ by up to **1.3** between the builds. `verify.mjs` reports that as a
+  NOTE, and fails on any coefficient difference outside a degenerate set.
+
+What is no longer a difference is an **empty eigenvector**. A normalised vector
+cannot be all zero, so one is not a rotation of anything, and `verify.mjs` now
+fails on one wherever it appears, in either build. MOPAC 7's own `HQRII`
+produces them: over a 201-point bond-length scan of HF, HCl, N<sub>2</sub> and
+CO under all three methods — 2412 geometries through each build — the unpatched
+wasm lost a vector at 146 of them and an unpatched native build of the identical
+C at 43, and the independent MOPAC 7.01 binary prints the same empty column at
+AM1 HF r = 1.05 Å. The two targets differ only in which geometries fall in,
+because arm64 clang contracts `a*b+c` into `fmadd` in the Householder reduction
+while the wasm MVP has no f64 FMA opcode, so the last bits of the tridiagonal
+differ and a different pivot is taken; the hole in the algorithm is the same on
+both. `patches/fortran/0009-hqrii-degenerate-eigenvector.patch` closes it, and
+the scan is 0 of 2412 on each target afterwards. Of the 42 verification decks,
+39 produce a byte-identical listing across that patch and the 3 that change are
+the three hydrogen-fluoride decks, each of which had an all-zero column.
+
+The set itself is checked, not just its members. Over the 70 degenerate sets of
+the 42 decks, the projector onto each set, `P = sum_k v_k v_k^T`, is built from
+both builds and compared element by element: worst `|P_wasm - P_native|` is
+**1.3e-4** after the patch and **1.0** before it, and the worst
+`|<v_i,v_j> - delta_ij|` inside a set, on either build, is **2.4e-4** after and
+**1.0** before. 1.3e-4 is the resolution of the comparison, because MOPAC prints
+coefficients to four decimals. So the two builds do span the same subspace and do
+carry an orthonormal basis of it; only the rotation inside differs.
 
 The whole program also builds and runs under `emcc -fsanitize=address`, and
 reports **nothing** on any of the 47 decks in `verification/`.

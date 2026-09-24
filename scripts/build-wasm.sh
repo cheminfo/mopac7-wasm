@@ -122,7 +122,7 @@ readonly LINK_FLAGS='-sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sAL
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # -Os is the default because it is measurably the better trade for a package
 # that is downloaded: it produces the same numbers bit for bit (all 306
-# verification levels) at 789,543 bytes raw / 257,079 brotli against -O3's
+# verification levels) at 790,343 bytes raw / 257,107 brotli against -O3's
 # 990,691 / 291,189 -- 20% smaller raw, 12% smaller brotli -- for a few per cent
 # of run time, which is inside the run-to-run spread on these decks. -Oz saves
 # another 4% of brotli and is consistently the slowest. Pass --opt O3 for the

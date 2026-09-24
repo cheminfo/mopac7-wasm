@@ -162,10 +162,10 @@ benchmark measures the difference at 5.6–6.6x.
   defined and not its members; the phase convention above cannot help. Over the
   42 verification decks the energies, charges and non-degenerate coefficients
   agree exactly between the WebAssembly and native builds while degenerate
-  coefficients differ by as much as 1.3, and on one deck — AM1 hydrogen fluoride
-  — the WebAssembly build leaves one vector of the 1PI pair all zero and
-  `symtrz.f` cannot label the pair. Read a degenerate level as a set (sum its
-  densities), never as two named orbitals.
+  coefficients differ by as much as 1.3. What is _not_ arbitrary is the set
+  itself: every vector is normalised, every set spans the same subspace on both
+  builds, and every symmetry label matches. Read a degenerate level as a set
+  (sum its densities), never as two named orbitals.
 - **`keywords` entries are checked, not passed through.** One keyword per array
   entry, printable ASCII, no whitespace; `+` (MOPAC's second-keyword-line
   marker), `SETUP` and `UHF` are refused with `code: 'input'`. Without that, a
@@ -237,8 +237,17 @@ rows whose columns carry the opposite sign, and 3 of the 6 molecular orbitals ar
 affected with every magnitude equal. The phase convention removes that difference
 from the parsed result. What it cannot remove is the mixture inside a degenerate
 set, which `verify.mjs` prints as a note rather than a failure; see [What it does
-not do](#what-it-does-not-do) for the consequence and for the one deck where it
-matters.
+not do](#what-it-does-not-do) for the consequence.
+
+An empty eigenvector is a failure in `verify.mjs`, inside a degenerate set as
+much as outside it, on either build: a normalised vector cannot be all zero, so
+one is a diagonaliser that lost a direction rather than an arbitrary rotation.
+MOPAC 7's HQRII does produce them — on a 2412-geometry bond-length scan of four
+diatomics, the unpatched WebAssembly build lost a vector at 146 geometries and
+an unpatched native build of the same C at 43, and an independent MOPAC 7.01
+does the same — and
+`patches/fortran/0009-hqrii-degenerate-eigenvector.patch` is what removes them:
+0 of 2412 on both targets after it.
 
 `wasm/BUILD.json` records the pins, the patches, the sizes and the digests, and
 `src/__tests__/wasmPayload.test.ts` hashes what the committed payload

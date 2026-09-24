@@ -1,6 +1,6 @@
 {
   "name": "mopac7-wasm",
-  "builtAt": "2026-09-24T12:58:46.385Z",
+  "builtAt": "2026-09-24T15:50:05.309Z",
   "program": {
     "name": "MOPAC",
     "version": "7.00",
@@ -60,6 +60,10 @@
       "subject": "sympro.f, polar.f, readmo.f, writmo.f: make four COMMON layouts agree"
     },
     {
+      "file": "patches/fortran/0009-hqrii-degenerate-eigenvector.patch",
+      "subject": "hqrii.f: never return an all-zero column for a degenerate root"
+    },
+    {
       "file": "patches/c/0008-cdiag-conflicting-prototypes.patch",
       "subject": "cdiag.c (f2c output): K&R declarations for ec08c_ and me08b_"
     },
@@ -92,9 +96,9 @@
   ],
   "artifacts": {
     "mopac7.wasm": {
-      "raw": 789547,
-      "gzip": 305972,
-      "brotli": 257440
+      "raw": 790343,
+      "gzip": 306172,
+      "brotli": 257107
     },
     "mopac7.mjs": {
       "raw": 65122,
@@ -102,13 +106,13 @@
       "brotli": 16227
     },
     "total": {
-      "raw": 854669,
-      "gzip": 324377,
-      "brotli": 273405
+      "raw": 855465,
+      "gzip": 324592,
+      "brotli": 273731
     }
   },
   "sha256": {
-    "mopac7.wasm": "793f1e711cfecd1345d407f60ffa4f6c379d04ac5fcc6469bd6325f3fe8559d3",
+    "mopac7.wasm": "d7cead8be4ea2ec6ac78e658e910bf6f9971f95b046ec78b331bcc3ff6f8b771",
     "mopac7.mjs": "badf1bc3ee6098570783721f0aa700b1efac70721abbffdd6dd759f0baf14425"
   },
   "limits": {
@@ -119,11 +123,11 @@
   },
   "payload": {
     "what": "wasm/data.js and wasm/glue.js, the two modules the npm package ships",
-    "wasmBytes": 789547,
-    "wasmSha256": "793f1e711cfecd1345d407f60ffa4f6c379d04ac5fcc6469bd6325f3fe8559d3",
-    "gzipBytes": 305972,
-    "base64Characters": 407964,
-    "dataModuleBytes": 408136,
+    "wasmBytes": 790343,
+    "wasmSha256": "d7cead8be4ea2ec6ac78e658e910bf6f9971f95b046ec78b331bcc3ff6f8b771",
+    "gzipBytes": 306172,
+    "base64Characters": 408232,
+    "dataModuleBytes": 408404,
     "glueModuleBytes": 65325,
     "note": "wasmSha256 is the digest of the DECOMPRESSED module, which is what src/__tests__ checks; the gzip stream itself is not reproducible across node releases."
   }

@@ -15,9 +15,13 @@
  * positive**, and when several coefficients tie at that magnitude the earliest
  * one in basis order decides.
  *
- * A degenerate pair is still only defined up to a rotation inside its subspace,
- * which no sign convention can pin; MOPAC's own diagonaliser is deterministic
- * enough that the mixtures agree between builds to the printed four decimals.
+ * A degenerate set is only defined up to a rotation inside its subspace, which
+ * no sign convention can pin, and two builds do land on different rotations:
+ * hydrogen fluoride under AM1 comes back as (0, -1) / (1, 0) from the
+ * WebAssembly build and as (-0.3648, 0.9311) / (-0.9311, -0.3648) natively.
+ * Both are orthonormal bases of the same plane, so a consumer must read a
+ * degenerate set as a subspace: what agrees between builds is the projector
+ * over the set, not the individual vectors.
  * @param coefficients - The coefficient matrix, orbital-major, modified in place.
  * @param basisSize - The number of atomic orbitals, i.e. the length of one column.
  * @returns The same array.

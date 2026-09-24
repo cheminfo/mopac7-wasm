@@ -1,0 +1,241 @@
+Subject: hqrii.f: never return an all-zero column for a degenerate root
+
+A defect in MOPAC 7's own eigensolver, not in the translation and not in the
+wasm build. It is present in 7.00 and in 7.01, on every target. THIS PATCH
+DEVIATES FROM THE 1993 SOURCE: it adds a test and a recovery pass that the
+original does not have.
+
+WHAT IT FIXES
+  HQRII finds eigenvectors by inverse iteration, one root at a time, and
+  Gram-Schmidts each one against the roots it has already accepted at the same
+  eigenvalue ("RE-ORTHOGONALISATION", label 400-420). For a degenerate pair the
+  shift of the second root equals the shift of the first to within one ulp, so
+  the LU of (T - shift*I) is singular to working precision: its smallest pivot
+  IS rounding noise, and the back substitution then returns a direction fixed
+  by the factorisation rather than by the start vector. Both roots come back
+  as the same vector, the Gram-Schmidt subtracts the whole of the second one,
+  and what reaches the normalisation is a residue of about 1.D-19 per element.
+
+  Nothing reports that. The normalisation is
+
+      430 SUM=1.D-24
+          DO 440 J=1,N
+      440 SUM=SUM+V(J,I)**2
+          SINV=1.D0/SQRT(SUM)
+
+  and with the residue at ~1.D-38 the 1.D-24 floor is the whole sum, so SINV
+  comes out 1.D12 where it should have been ~1.D19 and the column leaves with
+  a norm of 9.8e-08 instead of 1. MOPAC prints it as all zeros, and SYMTRZ's
+  character test (R00011 rejects a column whose self-overlap is below 1.D-5)
+  then labels the whole degenerate set '????' instead of, here, 1PI:
+
+    AM1 hydrogen fluoride, wasm, before        and after / both native builds
+                1 SI    2 SI   3 ????  4 ????        1 SI    2 SI    1 PI   1 PI
+      Py F 1    .0000   .0000   .0000   .0000        .0000   .0000   .0000 -1.0000
+      Pz F 1    .0000   .0000  1.0000   .0000        .0000   .0000  1.0000  .0000
+
+  Eigenvalues are not affected: the QR half of HQRII is untouched by this and
+  every level matches a native build exactly, before and after.
+
+  It is NOT a wasm defect, although that is where it was found. Over a
+  201-point bond-length scan of HF, HCl, N2 and CO under MNDO, AM1 and PM3 --
+  2412 geometries through each build -- the shipped wasm lost a vector at 146
+  of them (6.1%) and a native build of the identical C at 43 (1.8%); the
+  Ghemical MOPAC 7.01 binary prints the same empty column at AM1 HF r=1.05 and
+  PM3 HCl r=1.30. The two targets differ only in which geometries fall in,
+  because arm64 clang contracts a*b+c into fmadd in the Householder reduction
+  and the wasm MVP has no f64 FMA opcode, so the last bits of the tridiagonal
+  differ and a different pivot is taken. The hole in the algorithm is the same
+  on both. After this patch: 0 of 2412 on each.
+
+WHAT IT DOES
+  1. Detects the collapse, which the original never does: if SUM at label 430
+     is below 1.D-20 the vector is not an eigenvector. Label 300 scales the
+     largest element to EPS1=1.D-5 and the back transformation is orthogonal,
+     so SUM is about 1.D-10 for any vector that survived. Measured over the 42
+     verification decks, every SUM is either at the 1.D-24 floor (annihilated)
+     or 1.D-15 and above; 1.D-20 separates the two by four orders on one side
+     and five on the other.
+  2. Runs the inverse iteration once more for that root, from THE SAME start
+     vector (RN is saved and restored, so the pseudo-random stream is not
+     advanced and every later root is bit-for-bit unchanged), with two
+     additions that are what LAPACK's DSTEIN does on every pass:
+       * the start vector, and the vector after each pass, are projected out
+         of the directions the set has already accepted. Those are kept in
+         VTRI in the TRIDIAGONAL basis, which is the basis the iteration works
+         in, so they are copied at label 330 before the back transformation.
+       * the shift is displaced by 1.D-12*GERSCH. Projecting alone is not
+         enough: with the shift exactly at the root the solve returns one
+         direction whatever the start vector, because the pivot is noise.
+         Displaced far above that noise and far below the gap to the next
+         distinct root, the whole set is amplified by the same 1/PTOL and the
+         direction is the start vector's again. GERSCH is HQRII's own
+         Gershgorin bound, so this scales with the matrix.
+  The degeneracy-group test that was at label 380 is hoisted to the top of the
+  loop, unchanged, because the start vector now has to know the group; nothing
+  between the two points alters E or IG. V(*,M) holds the tridiagonal diagonal
+  and the loop overwrites it while reading it when I reaches M, which one pass
+  survives but a second would not, so it is copied into TDIAG first.
+
+  The healthy path does no arithmetic it did not do before: same start vector,
+  same shift (SHIFT=E(I) exactly), same 1.D-24 floor, same order of operations.
+  Measured: of the 42 verification decks, 39 produce a byte-identical listing
+  and the 3 that change are the three hydrogen-fluoride decks, each of which
+  had an all-zero column (AM1 in the final EIGENVECTORS block, MNDO and PM3 on
+  SCF iteration 1) and now has a unit vector there.
+
+  Cost: +796 bytes of .wasm raw, +200 gzip, -333 brotli; run time unchanged
+  within the noise of the machine (the added work is one norm and one scaled
+  copy of N elements per eigenvector, against the O(N**3) Householder).
+
+--- a/hqrii.f
++++ b/hqrii.f
+@@ -19,6 +19,7 @@
+ *
+ ************************************************************************
+       DIMENSION W(5,MAXPAR)
++      DIMENSION TDIAG(MAXORB), VTRI(MAXORB,MAXORB)
+       IF(N.LE.1 .OR. M .LE.1 .OR. M .GT. N) THEN
+          IF(N.EQ.1 .AND. M.EQ.1) THEN
+             E(1)=A(1)
+@@ -160,15 +161,55 @@
+       RA=EPS*0.6180339887485D0
+ C    0.618... IS THE FIBONACCI NUMBER (-1+SQRT(5))/2.
+       IG=1
++      NVT=0
++      DO 225 J=1,N
++  225 TDIAG(J)=V(J,M)
+       DO 450 I=1,M
+          IM1=I-1
++C
++C   Which set of (near-)degenerate roots is root I in? This test was at
++C   label 380, after the back transformation; it is hoisted here so
++C   that a recovery pass knows which directions the set already holds.
++C   Nothing between here and 380 alters E or IG.
++C
++         DO 205 J=IG,I
++            IF(ABS(E(J)-E(I)) .LT. EPS2) GOTO 206
++  205    CONTINUE
++         J=I
++  206    IG=J
++         IF(IG .EQ. I) NVT=0
++         LFIX=0
++         RNKEEP=RN
++  207    RN=RNKEEP
++C
++C   A recovery pass also has to move the shift off the eigenvalue. With
++C   the shift AT a degenerate root, the pivot of (T-shift*I) in the
++C   two-dimensional set is rounding noise, and the back substitution
++C   then returns one direction fixed by the factorisation whatever the
++C   start vector is -- projecting the start vector alone changes
++C   nothing. Displaced by PTOL, which is far above that noise and far
++C   below the gap to the next distinct root, the whole set is amplified
++C   by the same 1/PTOL, so the direction is the start vector's again.
++C   LAPACK's DSTEIN separates close shifts the same way.
++C
++         SHIFT=E(I)
++         IF(LFIX .NE. 0) SHIFT=SHIFT+1.D-12*MAX(GERSCH,1.D0)
+          DO 230 J=1,N
+             W(3,J)=0.D0
+             W(4,J)=W(1,J)
+-            W(5,J)=V(J,M)-E(I)
++            W(5,J)=TDIAG(J)-SHIFT
+             RN=RN+RA
+             IF(RN.GE.EPS) RN=RN-EPS
+   230    V(J,I)=RN
++         IF(LFIX .EQ. 0) GOTO 236
++         DO 235 KV=1,NVT
++            TSUM=0.D0
++            DO 232 J=1,N
++  232       TSUM=TSUM+VTRI(J,KV)*V(J,I)
++            DO 233 J=1,N
++  233       V(J,I)=V(J,I)-TSUM*VTRI(J,KV)
++  235    CONTINUE
++  236    CONTINUE
+          DO 260 J=1,NM1
+             IF(ABS(W(5,J)).GE.ABS(W(1,J))) GOTO 240
+             W(2,J)=-W(5,J)/W(1,J)
+@@ -205,10 +246,35 @@
+   300       S=EPS1/VN
+             DO 310 J=1,N
+   310       V(J,I)=V(J,I)*S
+-            IF(ITERE.GT.1 .AND. VN.GT.1) GOTO 330
++            IF(LFIX .EQ. 0) GOTO 316
++            DO 315 KV=1,NVT
++               TSUM=0.D0
++               DO 312 J=1,N
++  312          TSUM=TSUM+VTRI(J,KV)*V(J,I)
++               DO 313 J=1,N
++  313          V(J,I)=V(J,I)-TSUM*VTRI(J,KV)
++  315       CONTINUE
++  316       IF(ITERE.GT.1 .AND. VN.GT.1) GOTO 330
+   320    CONTINUE
+ C     TRANSFORMATION OF EIGENVECTORS
+-  330    IF(N.EQ.2) GOTO 380
++C
++C   V(*,I) is still in the tridiagonal basis here, which is the basis the
++C   inverse iteration works in, so this is where a recovery pass needs the
++C   directions its set has already taken. Keeping them costs one copy per
++C   root and changes no arithmetic.
++C
++  330    IF(NVT .GE. MAXORB) GOTO 336
++         TNORM=0.D0
++         DO 331 J=1,N
++  331    TNORM=TNORM+V(J,I)**2
++         IF(TNORM .GT. 1.D-30) GOTO 333
++         DO 332 J=1,N
++  332    VTRI(J,NVT+1)=0.D0
++         GOTO 336
++  333    TNORM=1.D0/SQRT(TNORM)
++         DO 334 J=1,N
++  334    VTRI(J,NVT+1)=V(J,I)*TNORM
++  336    IF(N.EQ.2) GOTO 380
+          KRANK=NM2*(N+1)/2
+          KPIV=NM2*NM1/2
+          DO 370 K=NM2,1,-1
+@@ -224,12 +290,7 @@
+   350       V(KK,I)=A(KRANK)*S+V(KK,I)
+   360       KPIV=KPIV-K
+   370    KRANK=KRANK-KP1
+-  380    DO 390 J=IG,I
+-            IF(ABS(E(J)-E(I)) .LT. EPS2) GOTO 400
+-  390    CONTINUE
+-         J=I
+-  400    IG=J
+-         IF(IG .EQ. I) GOTO 430
++  380    IF(IG .EQ. I) GOTO 430
+ C     RE-ORTHOGONALISATION
+          DO 420 K=IG,IM1
+             SUM=0.D0
+@@ -242,8 +303,28 @@
+   430    SUM=1.D-24
+          DO 440 J=1,N
+   440    SUM=SUM+V(J,I)**2
+-         SINV=1.D0/SQRT(SUM)
+-         DO 450 J=1,N
+-  450 V(J,I)=V(J,I)*SINV
++C
++C   A vector that leaves the re-orthogonalisation with no length left is
++C   not an eigenvector: the inverse iteration returned a direction this
++C   set already holds, and all that is left is rounding noise, which the
++C   1.D-24 floor above then scales up to a norm of about 1.D-7 without
++C   saying anything. Label 300 scales the largest element to EPS1=1.D-5
++C   and the back transformation is orthogonal, so SUM is about 1.D-10 for
++C   any vector that survived. Measured over the 42 verification decks,
++C   every SUM is either at the 1.D-24 floor (the annihilated ones) or
++C   1.D-15 and above, so 1.D-20 separates them by four orders on one side
++C   and five on the other. Run the iteration once more, from the same
++C   start vector, held out of the directions the set already holds --
++C   which is what LAPACK's DSTEIN does on every pass.
++C
++         IF(SUM .GE. 1.D-20) GOTO 442
++         IF(NVT .LE. 0 .OR. LFIX .NE. 0) GOTO 442
++         LFIX=1
++         GOTO 207
++  442    SINV=1.D0/SQRT(SUM)
++         DO 445 J=1,N
++  445    V(J,I)=V(J,I)*SINV
++         IF(NVT .LT. MAXORB) NVT=NVT+1
++  450 CONTINUE
+       RETURN
+       END
