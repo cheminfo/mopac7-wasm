@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/cheminfo/mopac7-wasm/compare/v1.1.0...v1.2.0) (2026-09-25)
+
+
+### Features
+
+* expose the Slater basis so the orbitals can be drawn ([8e5d9ee](https://github.com/cheminfo/mopac7-wasm/commit/8e5d9ee1b8cf4a653bb8e24b3bf79af0b6bdea95))
+
 ## [1.1.0](https://github.com/cheminfo/mopac7-wasm/compare/v1.0.0...v1.1.0) (2026-09-24)
 
 
