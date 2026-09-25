@@ -46,6 +46,31 @@ At the default `-Os`:
 `data.js` is the gzipped binary written out as base64, so it is larger than the
 gzip figure above and smaller than the raw one; a CDN gzips it again on the wire.
 
+### The basis tables come out of the same archive
+
+MOPAC 7 prints nothing about the atomic-orbital basis its coefficients are
+coefficients over, so `src/basis/` carries it, and every number there is parsed
+rather than transcribed. After a build, run
+
+```sh
+node scripts/generate-basis-tables.mjs
+```
+
+which reads `block.f`, `diat.f`, `setupg.f`, `moldat.f` and `esp.rof` out of
+`build/mopac-archive/1993_MOPAC7`, checks that tree against the `treeSha256` in
+`wasm/BUILD.json` and that the four data files are byte-identical in the patched
+copy beside it, and writes `src/basis/slaterExponents.ts`, `src/basis/sto6g.ts`
+and `src/basis/__tests__/data/mopac7-basis-source.f` — a verbatim excerpt of
+every line it read, with each block's file and line range in its header. It
+refuses to write a table the excerpt does not reproduce, and
+`src/basis/__tests__/basisTables.test.ts` re-parses that excerpt on every CI run,
+where the archive is absent. See the README for what the basis is and how it is
+verified against OpenMOPAC 23.
+
+`scripts/extract-mopac23-reference.mjs` writes the two OpenMOPAC 23 fixtures the
+verification compares against; it needs a directory of MOPAC 23 `.aux` files and
+is run by hand, which is why the fixtures are committed.
+
 ## Two link flags that are not optional
 
 `-sENVIRONMENT=web,worker` keeps the node branch out of the glue, so it carries

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>mopac7-wasm</title><meta name="description" content="Documentation for mopac7-wasm"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">mopac7-wasm</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>mopac7-wasm</h1></div><div class="tsd-panel tsd-typography"><h1 id="mopac7-wasm" class="tsd-anchor-link">mopac7-wasm<a href="#mopac7-wasm" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>mopac7-wasm</title><meta name="description" content="Documentation for mopac7-wasm"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script><script async src="assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">mopac7-wasm</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>mopac7-wasm</h1></div><div class="tsd-panel tsd-typography"><h1 id="mopac7-wasm" class="tsd-anchor-link">mopac7-wasm<a href="#mopac7-wasm" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
 <p><a href="https://www.npmjs.com/package/mopac7-wasm"><img src="https://img.shields.io/npm/v/mopac7-wasm.svg" alt="NPM version"></a>
 <a href="https://www.npmjs.com/package/mopac7-wasm"><img src="https://img.shields.io/npm/dm/mopac7-wasm.svg" alt="npm download"></a>
 <a href="https://github.com/cheminfo/mopac7-wasm/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/mopac7-wasm.svg" alt="license"></a></p>
@@ -104,6 +104,179 @@ milliseconds of decoding and compiling, once per JavaScript realm.</p>
 <p><code>compileMopac7()</code> returns the cached <code>WebAssembly.Module</code>, which is
 structured-cloneable: compile it once on the main thread, <code>postMessage</code> it to
 every worker, and each one instantiates it in well under a millisecond.</p>
+<h2 id="drawing-an-orbital" class="tsd-anchor-link">Drawing an orbital<a href="#drawing-an-orbital" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><code>result.coefficients</code> alone cannot be collocated on a grid: a coefficient is a
+number over a basis function, and MOPAC 7 prints not one word about the basis.
+So the package rebuilds it, out of MOPAC's own Fortran.</p>
+<pre><code class="js"><span class="hl-1">import</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-2">deorthogonalizeCoefficients</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-2">mopac7</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-2">mopac7Basis</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-2">mopac7OverlapMatrix</span><span class="hl-0">,</span><br/><span class="hl-0">} </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;mopac7-wasm&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">result</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-6">mopac7</span><span class="hl-0">({ </span><span class="hl-2">elements</span><span class="hl-0">, </span><span class="hl-2">coordinates</span><span class="hl-0">, </span><span class="hl-2">method:</span><span class="hl-0"> </span><span class="hl-3">&#39;MNDO&#39;</span><span class="hl-0"> });</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">basis</span><span class="hl-0"> = </span><span class="hl-6">mopac7Basis</span><span class="hl-0">(</span><span class="hl-2">result</span><span class="hl-0">);</span><br/><br/><span class="hl-2">basis</span><span class="hl-0">.</span><span class="hl-2">shells</span><span class="hl-0">[</span><span class="hl-7">0</span><span class="hl-0">];</span><br/><span class="hl-8">// { element: &#39;O&#39;, n: 2, l: 0, zeta: 2.699905,</span><br/><span class="hl-8">//   exponents: Float64Array(6), coefficients: Float64Array(6) }</span><br/><span class="hl-2">basis</span><span class="hl-0">.</span><span class="hl-2">functions</span><span class="hl-0">[</span><span class="hl-7">3</span><span class="hl-0">];</span><br/><span class="hl-8">// { atomIndex: 0, element: &#39;O&#39;, type: &#39;Pz&#39;, shell: 1, powers: [0, 0, 1] }</span><br/><br/><span class="hl-8">// Everything one atomic orbital needs, in bohr.</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">ao</span><span class="hl-0"> = </span><span class="hl-2">basis</span><span class="hl-0">.</span><span class="hl-2">functions</span><span class="hl-0">[</span><span class="hl-7">3</span><span class="hl-0">];</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">shell</span><span class="hl-0"> = </span><span class="hl-2">basis</span><span class="hl-0">.</span><span class="hl-2">shells</span><span class="hl-0">[</span><span class="hl-2">ao</span><span class="hl-0">.</span><span class="hl-2">shell</span><span class="hl-0">];</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">center</span><span class="hl-0"> = </span><span class="hl-2">basis</span><span class="hl-0">.</span><span class="hl-2">centers</span><span class="hl-0">.</span><span class="hl-6">subarray</span><span class="hl-0">(</span><span class="hl-2">ao</span><span class="hl-0">.</span><span class="hl-2">atomIndex</span><span class="hl-0"> * </span><span class="hl-7">3</span><span class="hl-0">, </span><span class="hl-2">ao</span><span class="hl-0">.</span><span class="hl-2">atomIndex</span><span class="hl-0"> * </span><span class="hl-7">3</span><span class="hl-0"> + </span><span class="hl-7">3</span><span class="hl-0">);</span><br/><br/><span class="hl-8">// And, when the coefficients should be coefficients over those orbitals:</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">overlap</span><span class="hl-0"> = </span><span class="hl-6">mopac7OverlapMatrix</span><span class="hl-0">(</span><span class="hl-2">basis</span><span class="hl-0">);</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">coefficients</span><span class="hl-0"> = </span><span class="hl-6">deorthogonalizeCoefficients</span><span class="hl-0">(</span><br/><span class="hl-0">  </span><span class="hl-2">result</span><span class="hl-0">.</span><span class="hl-2">coefficients</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-2">basis</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-2">overlap</span><span class="hl-0">,</span><br/><span class="hl-0">);</span>
+</code><button type="button">Copy</button></pre>
+
+<p><code>functions</code> is in the row order of <code>result.coefficients</code>, so the coefficient of
+<code>functions[ao]</code> in molecular orbital <code>mo</code> stays
+<code>coefficients[mo * functions.length + ao]</code>. <code>mopac7AtomicOrbitals(elements, method)</code> produces the same list without running anything, for a caller who wants
+the basis before the calculation; it reproduces <code>result.basis</code> exactly. Shells are shared — one per element
+and angular momentum, not one per orbital — and centres are one per atom, so
+paclitaxel's 299 atomic orbitals come back as 7 shells and 113 centres.</p>
+<h3 id="what-the-basis-is" class="tsd-anchor-link">What the basis is<a href="#what-the-basis-is" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>It is MOPAC's own STO-6G expansion of MOPAC's own Slater exponents, and every
+number in it is parsed out of the 1993 archive rather than transcribed:</p>
+<table>
+<thead>
+<tr>
+<th>what</th>
+<th>where it comes from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the valence exponents <code>ZS</code> and <code>ZP</code>, per hamiltonian, per element</td>
+<td><code>block.f</code> <code>DATA ZSM/ZPM</code>, <code>ZSAM1/ZPAM1</code>, <code>ZSPM3/ZPPM3</code>, <code>ZS3/ZP3</code></td>
+</tr>
+<tr>
+<td>which array belongs to which hamiltonian</td>
+<td><code>moldat.f</code> lines 93, 125, 157 and 230</td>
+</tr>
+<tr>
+<td>the principal quantum number</td>
+<td><code>diat.f</code> <code>DATA NPQ</code>, line 38</td>
+</tr>
+<tr>
+<td>how many atomic orbitals an atom gets</td>
+<td><code>block.f</code> <code>DATA NATORB</code>, line 89</td>
+</tr>
+<tr>
+<td>the six-gaussian expansion of a Slater orbital</td>
+<td><code>setupg.f</code> <code>SETUPG</code>, Stewart's STO-6G table</td>
+</tr>
+<tr>
+<td>the <code>zeta²</code> scaling and the cartesian normalisation</td>
+<td><code>esp.rof</code> <code>ELESP</code> lines 738, 750 and 766 to 769</td>
+</tr>
+<tr>
+<td>the ångström-to-bohr divisor, <code>0.529167</code></td>
+<td><code>diat.f</code> line 142 — MOPAC 7's own, 19 ppm below the CODATA value</td>
+</tr>
+</tbody>
+</table>
+<p><code>scripts/generate-basis-tables.mjs</code> does the reading and writes
+<code>src/basis/slaterExponents.ts</code>, <code>src/basis/sto6g.ts</code> and a verbatim excerpt of
+every line it read. It refuses to run unless the archive hashes to the digest
+<code>wasm/BUILD.json</code> records, and refuses to write a table the excerpt does not
+reproduce; a test re-parses the excerpt on every CI run, so the tables cannot
+drift from the Fortran even where the archive is absent.</p>
+<p>Verified against OpenMOPAC 23.2.5, which prints <code>AO_ZETA</code>, <code>ATOM_PQN</code> and
+<code>OVERLAP_MATRIX</code> where MOPAC 7 prints none of them:</p>
+<ul>
+<li><strong>123 exponents over 66 element-and-hamiltonian pairs are identical</strong>, and so
+is every principal quantum number. Six differ, all of them lithium and
+beryllium, because OpenMOPAC re-fitted those after 1993
+(<code>parameters_for_mndo_C.F90</code> line 55, <code>parameters_for_AM1_C.F90</code> lines 64 and
+79). This package keeps MOPAC 7's, which is the number its coefficients were
+computed with.</li>
+<li><strong>The rebuilt overlap matches MOPAC 23's own analytic Slater <code>OVERLAP_MATRIX</code>
+to 1.24e-4</strong> over water, formaldehyde, benzene and pyridine at MNDO, AM1 and
+PM3. That residual is the six-gaussian expansion itself, not a parameter error:
+STO-3G on the same exponents is forty times worse.</li>
+<li><strong>Every atomic orbital is normalised</strong>: its self-overlap is 1 to 1.2e-10 for
+the first three rows of the periodic table, and to 2.1e-7 for the fourth,
+where <code>setupg.f</code> prints Stewart's 4s and 4p row to seven significant digits
+instead of ten.</li>
+</ul>
+<h3 id="the-zdo-caveat" class="tsd-anchor-link">The ZDO caveat<a href="#the-zdo-caveat" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>NDDO neglects diatomic overlap, which means MOPAC's eigenvectors are not
+coefficients over these orbitals. They are orthonormal over an identity metric;
+over the real Slater overlap they are not. Over water, benzene and pyridine at
+all four hamiltonians — what the test suite runs — the worst <code>⟨ψ|ψ⟩</code> is 2.26
+under MNDO and 2.78 under PM3, for orbitals the method calls normalised, and two
+orbitals it calls orthogonal reach an overlap of 0.44.</p>
+<p><code>deorthogonalizeCoefficients</code> applies <code>C_AO = S^(-1/2) C_ZDO</code>, which is what
+MOPAC itself does before a Mulliken population analysis (<code>mullik.f</code> with
+<code>mult.f</code>) and before an ESP fit (<code>esp.rof</code> <code>ELESP</code>). It is the correct thing to
+draw, and <strong>it barely changes the picture.</strong> Over 228 occupied orbitals of water,
+formaldehyde, furan and benzene, collocated on a 0.3 bohr grid: not one node
+moved, not one lobe flipped, no voxel of opposite sign inside any isosurface,
+every π orbital and every HOMO identical. Where the two differ most — the deepest
+valence σ level of an oxygen-bearing molecule — the de-orthogonalised region is
+strictly contained in the raw one. The normalisation error cannot show at all if
+the isovalue is picked as a quantile of the sampled field, because such an
+isovalue has no scale of its own.</p>
+<p>So pass the de-orthogonalised coefficients because they are right, not because
+the drawing needs them.</p>
+<h3 id="mndo-has-the-most-physical-exponents" class="tsd-anchor-link">MNDO has the most physical exponents<a href="#mndo-has-the-most-physical-exponents" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>The four hamiltonians do not rank the same way for energies and for pictures. The
+mean radius of the valence s orbital, in ångström, is what the exponent decides,
+and it is a three-line calculation over <code>basis.shells</code>:</p>
+<table>
+<thead>
+<tr>
+<th>method</th>
+<th>H</th>
+<th>C</th>
+<th>N</th>
+<th>O</th>
+<th>F</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MNDO</td>
+<td>0.596</td>
+<td>0.740</td>
+<td><strong>0.587</strong></td>
+<td><strong>0.490</strong></td>
+<td><strong>0.464</strong></td>
+</tr>
+<tr>
+<td>MINDO/3</td>
+<td>0.611</td>
+<td>0.761</td>
+<td>0.489</td>
+<td>0.363</td>
+<td>0.425</td>
+</tr>
+<tr>
+<td>AM1</td>
+<td>0.668</td>
+<td>0.731</td>
+<td>0.571</td>
+<td>0.426</td>
+<td>0.351</td>
+</tr>
+<tr>
+<td>PM3</td>
+<td>0.820</td>
+<td>0.845</td>
+<td>0.652</td>
+<td>0.349</td>
+<td>0.281</td>
+</tr>
+</tbody>
+</table>
+<p>Carbon is where the four are closest, and it is also where they agree in the
+drawn field: benzene's occupied valence orbitals come out within 0.986 to 0.989
+of RHF/STO-3G by grid cosine under MNDO, AM1 and PM3 alike, so a hydrocarbon
+draws much the same whichever is used. Oxygen and fluorine are where they part company —
+PM3 makes them 1.4x and 1.7x smaller than MNDO does — and that is what shows:
+water's deepest valence level, the one the oxygen 2s exponent owns, comes out at
+a grid cosine of 0.963 under MNDO and 0.871 under PM3.</p>
+<p><strong>MNDO is the hamiltonian to draw with.</strong> Its nitrogen, oxygen and fluorine
+orbitals are the most diffuse of the four, which is to say the closest to what a
+real minimal basis holds, and its worst contraction against STO-3G is 1.20x
+where MINDO/3 reaches 1.62x, AM1 1.48x and PM3 1.85x.</p>
+<h3 id="elements-without-a-drawable-basis" class="tsd-anchor-link">Elements without a drawable basis<a href="#elements-without-a-drawable-basis" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li><strong>Sodium and potassium are sparkles.</strong> <code>block.f</code> gives atomic numbers 11 and 19
+<code>NATORB = 0</code> and no exponent at all, so MOPAC itself prints no coefficient row
+for them. They still carry a centre in <code>basis.centers</code>, so <code>atomIndex</code> indexes
+it directly, and they contribute no basis function. (OpenMOPAC 23 has since
+parameterised both; MOPAC 7 has not.)</li>
+<li><strong>Chromium has a d shell</strong> — <code>NATORB = 9</code> — and MOPAC's own STO-6G table
+expands only s and p, so <code>mopac7Basis</code> throws <code>code: 'input'</code> and names the
+reason. Its orbital energies and coefficients are still there; only the
+drawing is unavailable.</li>
+<li><strong>An element the hamiltonian has no parameters for</strong> never gets this far: the
+deck is refused by <code>buildMopac7Input</code> first.</li>
+</ul>
 <h2 id="api" class="tsd-anchor-link">API<a href="#api" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <table>
 <thead>
@@ -144,6 +317,46 @@ every worker, and each one instantiates it in well under a millisecond.</p>
 <tr>
 <td><code>Mopac7Error</code></td>
 <td>carries <code>code</code>, and the deck and listing that produced the failure</td>
+</tr>
+<tr>
+<td><code>mopac7Basis(result)</code></td>
+<td>the atomic-orbital basis the result was computed in, as contracted cartesian gaussians</td>
+</tr>
+<tr>
+<td><code>mopac7AtomicOrbitals(elements, method)</code></td>
+<td>the same atomic-orbital list MOPAC prints, without running anything</td>
+</tr>
+<tr>
+<td><code>mopac7OverlapMatrix(basis)</code></td>
+<td><code>⟨χᵢ|χⱼ⟩</code>, row-major</td>
+</tr>
+<tr>
+<td><code>deorthogonalizeCoefficients(coefficients, basis)</code></td>
+<td><code>S^(-1/2) C</code>, MOPAC's own way out of the ZDO basis</td>
+</tr>
+<tr>
+<td><code>inverseSqrtOverlap(overlap, size)</code></td>
+<td><code>S^(-1/2)</code> on its own</td>
+</tr>
+<tr>
+<td><code>symmetricEigen(matrix, size)</code></td>
+<td>the symmetric eigenproblem the two above are built on</td>
+</tr>
+<tr>
+<td><code>contractSlaterShell(n, l, zeta)</code></td>
+<td>one Slater orbital as six normalised gaussians</td>
+</tr>
+<tr>
+<td><code>MOPAC7_SLATER_EXPONENTS</code></td>
+<td>the valence exponents and principal quantum numbers, per hamiltonian, per element</td>
+</tr>
+<tr>
+<td><code>MOPAC7_STO6G</code></td>
+<td>Stewart's STO-6G table as <code>setupg.f</code> writes it</td>
+</tr>
+<tr>
+<td><code>MOPAC7_BOHR_PER_ANGSTROM</code></td>
+<td><code>0.529167</code>, the divisor MOPAC 7 hard-codes</td>
 </tr>
 </tbody>
 </table>
@@ -206,8 +419,9 @@ that it stops and says so, rather than writing past its own array.</li>
 <li><strong>The elements MOPAC 7 carries, and no more.</strong> <code>MOPAC7_ELEMENTS</code> lists them
 per method — PM3 is the widest at 30 elements, MINDO/3 the narrowest at 10,
 and only PM3 has magnesium while only MNDO and AM1 have lithium. <code>Na</code> and <code>K</code>
-are sparkles in AM1 and PM3, not parameterised atoms; MOPAC says so itself in
-the listing.</li>
+are sparkles in all three of MNDO, AM1 and PM3, not parameterised atoms —
+<code>block.f</code> gives them no exponent and no atomic orbital, and MOPAC says so
+itself in the listing.</li>
 <li><strong>No transition metals</strong> beyond MNDO chromium and zinc, no dispersion, no
 solvation, no excited states through this API.</li>
 <li><strong>No wall-clock budget.</strong> MOPAC's own <code>T=</code> limit reads a CPU clock that
@@ -347,4 +561,4 @@ missing.</p>
 three silent failure modes the script turns into hard errors. <code>--native</code> also
 builds the same translated C with the host compiler, which is what the A/B check
 compares against.</p>
-</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#mopac7-wasm"><span>mopac7-<wbr/>wasm</span></a><ul><li><a href="#why-it-exists"><span>Why it exists</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#usage"><span>Usage</span></a></li><li><ul><li><a href="#orbital-phases-are-pinned-and-the-listings-are-not-used"><span>Orbital phases are pinned, and the listing&#39;s are not used</span></a></li><li><a href="#bundlers-and-workers"><span>Bundlers and workers</span></a></li></ul></li><li><a href="#api"><span>API</span></a></li><li><a href="#what-it-does-not-do"><span>What it does not do</span></a></li><li><a href="#provenance"><span>Provenance</span></a></li><li><a href="#license"><span>License</span></a></li><li><a href="#how-to-cite"><span>How to cite</span></a></li><li><a href="#rebuilding-the-webassembly"><span>Rebuilding the <wbr/>Web<wbr/>Assembly</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">mopac7-wasm</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer></footer><div class="overlay"></div></body></html>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#mopac7-wasm"><span>mopac7-<wbr/>wasm</span></a><ul><li><a href="#why-it-exists"><span>Why it exists</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#usage"><span>Usage</span></a></li><li><ul><li><a href="#orbital-phases-are-pinned-and-the-listings-are-not-used"><span>Orbital phases are pinned, and the listing&#39;s are not used</span></a></li><li><a href="#bundlers-and-workers"><span>Bundlers and workers</span></a></li></ul></li><li><a href="#drawing-an-orbital"><span>Drawing an orbital</span></a></li><li><ul><li><a href="#what-the-basis-is"><span>What the basis is</span></a></li><li><a href="#the-zdo-caveat"><span>The <wbr/>ZDO caveat</span></a></li><li><a href="#mndo-has-the-most-physical-exponents"><span>MNDO has the most physical exponents</span></a></li><li><a href="#elements-without-a-drawable-basis"><span>Elements without a drawable basis</span></a></li></ul></li><li><a href="#api"><span>API</span></a></li><li><a href="#what-it-does-not-do"><span>What it does not do</span></a></li><li><a href="#provenance"><span>Provenance</span></a></li><li><a href="#license"><span>License</span></a></li><li><a href="#how-to-cite"><span>How to cite</span></a></li><li><a href="#rebuilding-the-webassembly"><span>Rebuilding the <wbr/>Web<wbr/>Assembly</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">mopac7-wasm</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer></footer><div class="overlay"></div></body></html>
