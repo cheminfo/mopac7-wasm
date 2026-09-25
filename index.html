@@ -99,7 +99,7 @@ do</a>.</p>
 JavaScript — gzipped, base64-encoded and decoded with <code>DecompressionStream</code> —
 so there is no <code>.wasm</code> file to serve, no <code>locateFile</code>, no <code>vite-plugin-wasm</code>, no
 <code>experiments.asyncWebAssembly</code> and no asset rule. The cost is the payload and
-the glue — 473 kB of bundle, 327 kB gzipped over the wire — plus a few
+the glue — 474 kB of bundle, 328 kB gzipped over the wire — plus a few
 milliseconds of decoding and compiling, once per JavaScript realm.</p>
 <p><code>compileMopac7()</code> returns the cached <code>WebAssembly.Module</code>, which is
 structured-cloneable: compile it once on the main thread, <code>postMessage</code> it to
@@ -148,9 +148,18 @@ every worker, and each one instantiates it in well under a millisecond.</p>
 </tbody>
 </table>
 <p><code>Mopac7Error.code</code> is one of <code>'input'</code>, <code>'keywords'</code>, <code>'geometry'</code>,
-<code>'parameters'</code>, <code>'scf'</code>, <code>'aborted'</code> or <code>'parse'</code>. A run that did not reach
-self-consistency throws rather than returning orbital energies nobody should
-use.</p>
+<code>'parameters'</code>, <code>'limits'</code>, <code>'scf'</code>, <code>'halt'</code>, <code>'aborted'</code> or <code>'parse'</code>. A run
+that did not reach self-consistency throws rather than returning orbital
+energies nobody should use.</p>
+<p>MOPAC 7 exits 0 at all 114 of its <code>STOP</code> statements, so the exit code says
+nothing and the listing says everything. When MOPAC stops, the error quotes what
+it printed, verbatim, rather than guessing from a block that is missing:</p>
+<pre><code><span class="hl-5">MOPAC</span><span class="hl-0"> </span><span class="hl-9">stopped</span><span class="hl-0">: </span><span class="hl-5">THIS</span><span class="hl-0"> </span><span class="hl-5">SYSTEM</span><span class="hl-0"> </span><span class="hl-5">CONTAINS</span><span class="hl-0"> -</span><span class="hl-5">HNCO</span><span class="hl-0">- </span><span class="hl-5">GROUPS</span><span class="hl-0">. / </span><span class="hl-5">YOU</span><span class="hl-0"> </span><span class="hl-5">MUST</span><span class="hl-0"> </span><span class="hl-5">SPECIFY</span><span class="hl-0"> </span><span class="hl-3">&quot;NOMM&quot;</span><span class="hl-0"> </span><span class="hl-5">OR</span><br/><span class="hl-3">&quot;MMOK&quot;</span><span class="hl-0"> </span><span class="hl-5">REGARDING</span><span class="hl-0"> </span><span class="hl-5">MOLECULAR</span><span class="hl-0"> </span><span class="hl-5">MECHANICS</span><span class="hl-0"> </span><span class="hl-5">CORRECTION</span>
+</code><button>Copy</button></pre>
+
+<p>Halts that a caller can act on carry a code of their own; anything else comes
+back as <code>'halt'</code> with the last lines of the listing attached, so a stop nobody
+anticipated is still reported as itself.</p>
 <p>Every instance is discarded after one calculation, and that is not a choice:
 MOPAC 7 is Fortran 77 whose whole state lives in <code>SAVE</code>d COMMON blocks, so a
 second run in the same instance inherits the first one's converged density. The
@@ -158,9 +167,14 @@ module is compiled once and reused, which is where all the speed is — the
 benchmark measures the difference at 5.6–6.6x.</p>
 <h2 id="what-it-does-not-do" class="tsd-anchor-link">What it does not do<a href="#what-it-does-not-do" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <ul>
-<li><strong>At most 30 non-hydrogen atoms and 30 hydrogens</strong> (150 atomic orbitals), the
-bounds MOPAC's own <code>SIZES</code> file was compiled with. Larger molecules are
-refused before the module is touched; <code>MOPAC7_LIMITS</code> carries the numbers.</li>
+<li><strong>At most 64 non-hydrogen atoms and 56 hydrogens</strong> (120 atoms, 312 atomic
+orbitals), the bounds MOPAC's own <code>SIZES</code> file was compiled with. That holds
+paclitaxel — 62 heavy atoms, 51 hydrogens, 299 orbitals — which is what the
+pair was chosen for; the 1993 archive's own 30/30 stops at caffeine. Larger
+molecules are refused before the module is touched, and <code>MOPAC7_LIMITS</code>
+carries the numbers. Raising it costs declared memory and almost no download:
+the module declares 87.4 MiB of WebAssembly memory instead of 62.9, for 1,525
+more bytes of <code>.wasm</code> raw and 97 more bytes in the compressed payload.</li>
 <li><strong>Restricted (RHF) only.</strong> <code>spin</code> writes MOPAC's multiplicity keyword and
 MOPAC then runs its RHF half-electron treatment, which is a real open-shell
 calculation: a triplet O<sub>2</sub> comes out 27.4 kcal/mol below the singlet.
@@ -173,15 +187,22 @@ builds may print different mixtures of, say, a π pair, because only the set is
 defined and not its members; the phase convention above cannot help. Over the
 42 verification decks the energies, charges and non-degenerate coefficients
 agree exactly between the WebAssembly and native builds while degenerate
-coefficients differ by as much as 1.3, and on one deck — AM1 hydrogen fluoride
-— the WebAssembly build leaves one vector of the 1PI pair all zero and
-<code>symtrz.f</code> cannot label the pair. Read a degenerate level as a set (sum its
-densities), never as two named orbitals.</li>
+coefficients differ by as much as 1.3. What is <em>not</em> arbitrary is the set
+itself: every vector is normalised, every set spans the same subspace on both
+builds, and every symmetry label matches. Read a degenerate level as a set
+(sum its densities), never as two named orbitals.</li>
 <li><strong><code>keywords</code> entries are checked, not passed through.</strong> One keyword per array
 entry, printable ASCII, no whitespace; <code>+</code> (MOPAC's second-keyword-line
-marker), <code>SETUP</code> and <code>UHF</code> are refused with <code>code: 'input'</code>. Without that, a
-keyword holding a newline would shift every line of the deck below it and
-MOPAC would silently read the wrong geometry.</li>
+marker), <code>SETUP</code>, <code>UHF</code>, <code>MMOK</code> and <code>NOMM</code> are refused with <code>code: 'input'</code>.
+Without that, a keyword holding a newline would shift every line of the deck
+below it and MOPAC would silently read the wrong geometry.</li>
+<li><strong>A keyword MOPAC does not know stops the run.</strong> The deck carries no <code>DEBUG</code>,
+which is what would turn an unrecognised keyword into a line of the listing
+instead of a halt, so a typo throws with <code>code: 'keywords'</code> and the keyword
+named. Put <code>'DEBUG'</code> in <code>keywords</code> to get MOPAC's old behaviour back, and the
+leftovers in <code>result.unknownKeywords</code>.</li>
+<li><strong>MOPAC's molecular-mechanics correction holds 60 peptide torsions.</strong> Past
+that it stops and says so, rather than writing past its own array.</li>
 <li><strong>The elements MOPAC 7 carries, and no more.</strong> <code>MOPAC7_ELEMENTS</code> lists them
 per method — PM3 is the widest at 30 elements, MINDO/3 the narrowest at 10,
 and only PM3 has magnesium while only MNDO and AM1 have lithium. <code>Na</code> and <code>K</code>
@@ -207,12 +228,16 @@ drops from every printed block.</p>
 <code>ed31531</code>, checked by file count, by a tree digest and by the presence of its own
 public-domain notice. They are translated to C with
 <a href="https://www.netlib.org/f2c/">f2c</a> 20240504, built from source, and compiled with
-<a href="https://emscripten.org/">Emscripten</a> against netlib libf2c. Eight small patches
-are applied, each a file in <code>patches/</code> whose header quotes the exact compiler,
-linker or sanitizer message it fixes: five are portability fixes and three are
-genuine COMMON-block defects in MOPAC 7.00 that MOPAC 7.01 also fixed, found
-here with AddressSanitizer and a static size check the build runs on every
-block. Nothing in the hamiltonians, the parameters or the SCF is touched.</p>
+<a href="https://emscripten.org/">Emscripten</a> against netlib libf2c. Twelve small
+patches are applied, each a file in <code>patches/</code> whose header quotes the exact
+compiler, linker or sanitizer message, or the measurement, that it answers: five
+are portability fixes; three are genuine COMMON-block defects in MOPAC 7.00 that
+MOPAC 7.01 also fixed, found here with AddressSanitizer and a static size check
+the build runs on every block; one recovers an eigenvector MOPAC's own HQRII
+drops; one bounds an array MOPAC fills with no bound check; one makes <code>wrtkey.f</code>
+recognise the <code>ALLVEC</code> keyword that <code>matou1.f</code> implements and <code>wrtkey.f</code> never
+listed; and one is the two numbers in <code>SIZES</code>. Nothing in the hamiltonians, the
+parameters or the SCF is touched.</p>
 <p>MOPAC 7.00 was written at the Frank J. Seiler Research Laboratory, United States
 Air Force Academy, and distributed through the Quantum Chemistry Program
 Exchange as QCPE program #688. It is the last open-source release of MOPAC:
@@ -242,8 +267,16 @@ rows whose columns carry the opposite sign, and 3 of the 6 molecular orbitals ar
 affected with every magnitude equal. The phase convention removes that difference
 from the parsed result. What it cannot remove is the mixture inside a degenerate
 set, which <code>verify.mjs</code> prints as a note rather than a failure; see <a href="#what-it-does-not-do">What it does
-not do</a> for the consequence and for the one deck where it
-matters.</p>
+not do</a> for the consequence.</p>
+<p>An empty eigenvector is a failure in <code>verify.mjs</code>, inside a degenerate set as
+much as outside it, on either build: a normalised vector cannot be all zero, so
+one is a diagonaliser that lost a direction rather than an arbitrary rotation.
+MOPAC 7's HQRII does produce them — on a 2412-geometry bond-length scan of four
+diatomics, the unpatched WebAssembly build lost a vector at 146 geometries and
+an unpatched native build of the same C at 43, and an independent MOPAC 7.01
+does the same — and
+<code>patches/fortran/0009-hqrii-degenerate-eigenvector.patch</code> is what removes them:
+0 of 2412 on both targets after it.</p>
 <p><code>wasm/BUILD.json</code> records the pins, the patches, the sizes and the digests, and
 <code>src/__tests__/wasmPayload.test.ts</code> hashes what the committed payload
 decompresses to on every test run.</p>
