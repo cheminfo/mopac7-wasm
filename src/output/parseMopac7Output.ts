@@ -1,5 +1,5 @@
 import { Mopac7Error } from '../Mopac7Error.ts';
-import type { Mopac7Result } from '../types.ts';
+import type { Mopac7Method, Mopac7Result } from '../types.ts';
 
 import { findHaltReason, listingTail } from './haltReason.ts';
 import { parseAtoms } from './parseAtoms.ts';
@@ -64,6 +64,7 @@ export function parseMopac7Output(listing: string): Mopac7Result {
 
   return {
     version,
+    method: readMethod(text, listing),
     converged: text.includes('SCF FIELD WAS ACHIEVED'),
     terminationMessage: findTerminationMessage(lines),
     heatOfFormation: number(
@@ -111,6 +112,31 @@ export function parseMopac7Output(listing: string): Mopac7Result {
     ),
     unknownKeywords: readUnknownKeywords(text),
   };
+}
+
+/**
+ * Read the hamiltonian off MOPAC's own heading. `readmo.f` lines 229 to 234 pick
+ * one of `   MNDO`, `MINDO/3`, `    AM1` and `    PM3` — MNDO when the deck names
+ * none — and print it ahead of ` CALCULATION RESULTS`, so this is MOPAC's own
+ * decision rather than a second reading of the keyword line.
+ * @param text - The listing with the `symtrz.f` noise dropped.
+ * @param listing - The listing verbatim, for the error.
+ * @returns The hamiltonian.
+ * @throws {Mopac7Error} With `code: 'parse'` when the heading is absent.
+ */
+function readMethod(text: string, listing: string): Mopac7Method {
+  const heading = capture(
+    text,
+    /^\s*(?<value>MNDO|MINDO\/3|AM1|PM3) CALCULATION RESULTS\s*$/m,
+  );
+  if (heading === null) {
+    throw new Mopac7Error(
+      'parse',
+      'the listing carries no "<hamiltonian> CALCULATION RESULTS" heading',
+      { output: listing },
+    );
+  }
+  return heading === 'MINDO/3' ? 'MINDO3' : (heading as Mopac7Method);
 }
 
 function assertNoFailure(text: string, lines: readonly string[]): void {

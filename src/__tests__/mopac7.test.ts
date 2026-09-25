@@ -21,6 +21,7 @@ test.each(CASES)(
     const result = await mopac7({ ...MOLECULES[name], method });
 
     expect(result.version).toBe('7.00');
+    expect(result.method).toBe(method);
     expect(result.converged).toBe(true);
     expect(result.terminationMessage).toBe(
       '1SCF WAS SPECIFIED, SO BFGS WAS NOT USED',

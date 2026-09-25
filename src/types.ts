@@ -143,7 +143,11 @@ export interface Mopac7AtomicOrbital {
   atomIndex: number;
   /** The element symbol MOPAC printed for that atom. */
   element: string;
-  /** MOPAC's own orbital label: `'S'`, `'Px'`, `'Py'`, `'Pz'`, `'Dx2'`, `'Dxz'`, `'Dz2'`, `'Dyz'` or `'Dxy'`. */
+  /**
+   * MOPAC's own orbital label, from the `ATORBS` table of `matou1.f` line 40:
+   * `'S'`, `'Px'`, `'Py'`, `'Pz'`, and for a d shell `'x2'`, `'xz'`, `'z2'`,
+   * `'yz'` and `'xz'` again — the last is a typo in MOPAC for `'xy'`.
+   */
   type: string;
 }
 
@@ -159,6 +163,13 @@ export interface Mopac7Dipole {
 export interface Mopac7Result {
   /** MOPAC's own version string, read from the banner, e.g. `'7.00'`. */
   version: string;
+  /**
+   * The hamiltonian MOPAC ran, as MOPAC itself names it in the `… CALCULATION
+   * RESULTS` heading of `readmo.f` lines 229 to 234 — where `MNDO` is what it
+   * prints when the deck asks for none. `mopac7Basis` reads it, because the
+   * Slater exponents an orbital is drawn over are the hamiltonian's.
+   */
+  method: Mopac7Method;
   /** `true` when the listing carries `SCF FIELD WAS ACHIEVED`. */
   converged: boolean;
   /** MOPAC's geometry verdict, e.g. `'1SCF WAS SPECIFIED, SO BFGS WAS NOT USED'`, or `null`. */

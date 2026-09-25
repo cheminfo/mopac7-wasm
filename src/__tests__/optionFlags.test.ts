@@ -95,6 +95,8 @@ test('precise: false leaves the SCF looser, in the fifth decimal', async () => {
 test('MINDO3 is its own hamiltonian, not AM1 under another name', async () => {
   const result = await mopac7({ ...MOLECULES.water, method: 'MINDO3' });
 
+  // MOPAC writes its heading as "MINDO/3 CALCULATION RESULTS" (readmo.f line 230).
+  expect(result.method).toBe('MINDO3');
   expect(result.heatOfFormation).toBe(-53.08312);
   expect(result.ionizationPotential).toBe(12.73504);
   expect(result.totalEnergy).toBe(-341.48315);

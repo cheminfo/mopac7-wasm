@@ -1,0 +1,675 @@
+{
+ "what": "The valence Slater exponent and principal quantum number OpenMOPAC 23 prints for every element, per hamiltonian",
+ "provenance": {
+  "program": "OpenMOPAC 23.2.5",
+  "blocks": [
+   "AO_ZETA",
+   "ATOM_PQN",
+   "OVERLAP_MATRIX",
+   "ATOM_X",
+   "ATOM_SYMTYPE"
+  ],
+  "generatedBy": "scripts/extract-mopac23-reference.mjs",
+  "auxFilesRead": 133
+ },
+ "rows": [
+  {
+   "method": "AM1",
+   "element": "Al",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.516593,
+   "zetaP": 1.306347
+  },
+  {
+   "method": "AM1",
+   "element": "As",
+   "principalQuantumNumber": 4,
+   "zetaS": 2.2576897,
+   "zetaP": 1.724971
+  },
+  {
+   "method": "AM1",
+   "element": "B",
+   "principalQuantumNumber": 2,
+   "zetaS": 1.611709,
+   "zetaP": 1.555385
+  },
+  {
+   "method": "AM1",
+   "element": "Be",
+   "principalQuantumNumber": 2,
+   "zetaS": 0.7425237,
+   "zetaP": 0.8080499
+  },
+  {
+   "method": "AM1",
+   "element": "Bi",
+   "principalQuantumNumber": 6,
+   "zetaS": 4.0007862,
+   "zetaP": 0.9547714
+  },
+  {
+   "method": "AM1",
+   "element": "Br",
+   "principalQuantumNumber": 4,
+   "zetaS": 3.064133,
+   "zetaP": 2.038333
+  },
+  {
+   "method": "AM1",
+   "element": "C",
+   "principalQuantumNumber": 2,
+   "zetaS": 1.808665,
+   "zetaP": 1.685116
+  },
+  {
+   "method": "AM1",
+   "element": "Cl",
+   "principalQuantumNumber": 3,
+   "zetaS": 3.631376,
+   "zetaP": 2.076799
+  },
+  {
+   "method": "AM1",
+   "element": "F",
+   "principalQuantumNumber": 2,
+   "zetaS": 3.770082,
+   "zetaP": 2.49467
+  },
+  {
+   "method": "AM1",
+   "element": "Ga",
+   "principalQuantumNumber": 4,
+   "zetaS": 4.000216,
+   "zetaP": 1.3540466
+  },
+  {
+   "method": "AM1",
+   "element": "Ge",
+   "principalQuantumNumber": 4,
+   "zetaS": 1.219631,
+   "zetaP": 1.982794
+  },
+  {
+   "method": "AM1",
+   "element": "H",
+   "principalQuantumNumber": 1,
+   "zetaS": 1.188078,
+   "zetaP": null
+  },
+  {
+   "method": "AM1",
+   "element": "Hg",
+   "principalQuantumNumber": 6,
+   "zetaS": 2.036413,
+   "zetaP": 1.955766
+  },
+  {
+   "method": "AM1",
+   "element": "I",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.102858,
+   "zetaP": 2.161153
+  },
+  {
+   "method": "AM1",
+   "element": "In",
+   "principalQuantumNumber": 5,
+   "zetaS": 1.8281576,
+   "zetaP": 1.48475
+  },
+  {
+   "method": "AM1",
+   "element": "K",
+   "principalQuantumNumber": 4,
+   "zetaS": 1.2660244,
+   "zetaP": 0.9555939
+  },
+  {
+   "method": "AM1",
+   "element": "Li",
+   "principalQuantumNumber": 2,
+   "zetaS": 0.7973487,
+   "zetaP": 0.9045583
+  },
+  {
+   "method": "AM1",
+   "element": "Mg",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.0128928,
+   "zetaP": 1.1798191
+  },
+  {
+   "method": "AM1",
+   "element": "N",
+   "principalQuantumNumber": 2,
+   "zetaS": 2.31541,
+   "zetaP": 2.15794
+  },
+  {
+   "method": "AM1",
+   "element": "Na",
+   "principalQuantumNumber": 3,
+   "zetaS": 0.789009,
+   "zetaP": 1.1399864
+  },
+  {
+   "method": "AM1",
+   "element": "O",
+   "principalQuantumNumber": 2,
+   "zetaS": 3.108032,
+   "zetaP": 2.524039
+  },
+  {
+   "method": "AM1",
+   "element": "P",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.98128,
+   "zetaP": 1.87515
+  },
+  {
+   "method": "AM1",
+   "element": "Pb",
+   "principalQuantumNumber": 6,
+   "zetaS": 2.4432161,
+   "zetaP": 1.5506706
+  },
+  {
+   "method": "AM1",
+   "element": "S",
+   "principalQuantumNumber": 3,
+   "zetaS": 2.366515,
+   "zetaP": 1.667263
+  },
+  {
+   "method": "AM1",
+   "element": "Sb",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.254823,
+   "zetaP": 2.218592
+  },
+  {
+   "method": "AM1",
+   "element": "Se",
+   "principalQuantumNumber": 4,
+   "zetaS": 2.684157,
+   "zetaP": 2.0506164
+  },
+  {
+   "method": "AM1",
+   "element": "Si",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.830697,
+   "zetaP": 1.284953
+  },
+  {
+   "method": "AM1",
+   "element": "Sn",
+   "principalQuantumNumber": 5,
+   "zetaS": 1.6182807,
+   "zetaP": 1.5084984
+  },
+  {
+   "method": "AM1",
+   "element": "Te",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.1321165,
+   "zetaP": 1.971268
+  },
+  {
+   "method": "AM1",
+   "element": "Tl",
+   "principalQuantumNumber": 6,
+   "zetaS": 3.8077333,
+   "zetaP": 1.5511578
+  },
+  {
+   "method": "AM1",
+   "element": "Zn",
+   "principalQuantumNumber": 4,
+   "zetaS": 1.954299,
+   "zetaP": 1.372365
+  },
+  {
+   "method": "MNDO",
+   "element": "Al",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.444161,
+   "zetaP": 1.444161
+  },
+  {
+   "method": "MNDO",
+   "element": "As",
+   "principalQuantumNumber": 4,
+   "zetaS": 2.5614338,
+   "zetaP": 1.6117315
+  },
+  {
+   "method": "MNDO",
+   "element": "B",
+   "principalQuantumNumber": 2,
+   "zetaS": 1.506801,
+   "zetaP": 1.506801
+  },
+  {
+   "method": "MNDO",
+   "element": "Be",
+   "principalQuantumNumber": 2,
+   "zetaS": 1.00421,
+   "zetaP": 1.00421
+  },
+  {
+   "method": "MNDO",
+   "element": "Bi",
+   "principalQuantumNumber": 6,
+   "zetaS": 2.6772255,
+   "zetaP": 0.6936864
+  },
+  {
+   "method": "MNDO",
+   "element": "Br",
+   "principalQuantumNumber": 4,
+   "zetaS": 3.8543019,
+   "zetaP": 2.1992091
+  },
+  {
+   "method": "MNDO",
+   "element": "C",
+   "principalQuantumNumber": 2,
+   "zetaS": 1.787537,
+   "zetaP": 1.787537
+  },
+  {
+   "method": "MNDO",
+   "element": "Cl",
+   "principalQuantumNumber": 3,
+   "zetaS": 3.784645,
+   "zetaP": 2.036263
+  },
+  {
+   "method": "MNDO",
+   "element": "F",
+   "principalQuantumNumber": 2,
+   "zetaS": 2.848487,
+   "zetaP": 2.848487
+  },
+  {
+   "method": "MNDO",
+   "element": "Ga",
+   "principalQuantumNumber": 4,
+   "zetaS": 0.6986316,
+   "zetaP": 1.8386933
+  },
+  {
+   "method": "MNDO",
+   "element": "Ge",
+   "principalQuantumNumber": 4,
+   "zetaS": 1.29318,
+   "zetaP": 2.020564
+  },
+  {
+   "method": "MNDO",
+   "element": "H",
+   "principalQuantumNumber": 1,
+   "zetaS": 1.331967,
+   "zetaP": null
+  },
+  {
+   "method": "MNDO",
+   "element": "Hg",
+   "principalQuantumNumber": 6,
+   "zetaS": 2.218184,
+   "zetaP": 2.065038
+  },
+  {
+   "method": "MNDO",
+   "element": "I",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.272961,
+   "zetaP": 2.169498
+  },
+  {
+   "method": "MNDO",
+   "element": "In",
+   "principalQuantumNumber": 5,
+   "zetaS": 1.762574,
+   "zetaP": 1.8648962
+  },
+  {
+   "method": "MNDO",
+   "element": "K",
+   "principalQuantumNumber": 4,
+   "zetaS": 0.7276039,
+   "zetaP": 0.9871174
+  },
+  {
+   "method": "MNDO",
+   "element": "Li",
+   "principalQuantumNumber": 2,
+   "zetaS": 0.4296141,
+   "zetaP": 0.7554884
+  },
+  {
+   "method": "MNDO",
+   "element": "Mg",
+   "principalQuantumNumber": 3,
+   "zetaS": 0.9394811,
+   "zetaP": 1.3103428
+  },
+  {
+   "method": "MNDO",
+   "element": "N",
+   "principalQuantumNumber": 2,
+   "zetaS": 2.255614,
+   "zetaP": 2.255614
+  },
+  {
+   "method": "MNDO",
+   "element": "Na",
+   "principalQuantumNumber": 3,
+   "zetaS": 0.8213124,
+   "zetaP": 1.030327
+  },
+  {
+   "method": "MNDO",
+   "element": "O",
+   "principalQuantumNumber": 2,
+   "zetaS": 2.699905,
+   "zetaP": 2.699905
+  },
+  {
+   "method": "MNDO",
+   "element": "P",
+   "principalQuantumNumber": 3,
+   "zetaS": 2.10872,
+   "zetaP": 1.78581
+  },
+  {
+   "method": "MNDO",
+   "element": "Pb",
+   "principalQuantumNumber": 6,
+   "zetaS": 2.498286,
+   "zetaP": 2.082071
+  },
+  {
+   "method": "MNDO",
+   "element": "S",
+   "principalQuantumNumber": 3,
+   "zetaS": 2.312962,
+   "zetaP": 2.009146
+  },
+  {
+   "method": "MNDO",
+   "element": "Sb",
+   "principalQuantumNumber": 5,
+   "zetaS": 3.6458835,
+   "zetaP": 1.9733156
+  },
+  {
+   "method": "MNDO",
+   "element": "Se",
+   "principalQuantumNumber": 4,
+   "zetaS": 0.7242956,
+   "zetaP": 1.9267288
+  },
+  {
+   "method": "MNDO",
+   "element": "Si",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.315986,
+   "zetaP": 1.709943
+  },
+  {
+   "method": "MNDO",
+   "element": "Sn",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.08038,
+   "zetaP": 1.937106
+  },
+  {
+   "method": "MNDO",
+   "element": "Te",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.7461609,
+   "zetaP": 1.6160376
+  },
+  {
+   "method": "MNDO",
+   "element": "Tl",
+   "principalQuantumNumber": 6,
+   "zetaS": 4.0000447,
+   "zetaP": 1.8076332
+  },
+  {
+   "method": "MNDO",
+   "element": "Zn",
+   "principalQuantumNumber": 4,
+   "zetaS": 2.047359,
+   "zetaP": 1.460946
+  },
+  {
+   "method": "PM3",
+   "element": "Al",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.702888,
+   "zetaP": 1.073629
+  },
+  {
+   "method": "PM3",
+   "element": "As",
+   "principalQuantumNumber": 4,
+   "zetaS": 2.636177,
+   "zetaP": 1.703889
+  },
+  {
+   "method": "PM3",
+   "element": "B",
+   "principalQuantumNumber": 2,
+   "zetaS": 1.5312597,
+   "zetaP": 1.1434597
+  },
+  {
+   "method": "PM3",
+   "element": "Be",
+   "principalQuantumNumber": 2,
+   "zetaS": 0.877439,
+   "zetaP": 1.508755
+  },
+  {
+   "method": "PM3",
+   "element": "Bi",
+   "principalQuantumNumber": 6,
+   "zetaS": 4.916451,
+   "zetaP": 1.934935
+  },
+  {
+   "method": "PM3",
+   "element": "Br",
+   "principalQuantumNumber": 4,
+   "zetaS": 5.348457,
+   "zetaP": 2.12759
+  },
+  {
+   "method": "PM3",
+   "element": "C",
+   "principalQuantumNumber": 2,
+   "zetaS": 1.565085,
+   "zetaP": 1.842345
+  },
+  {
+   "method": "PM3",
+   "element": "Cd",
+   "principalQuantumNumber": 5,
+   "zetaS": 1.679351,
+   "zetaP": 2.066412
+  },
+  {
+   "method": "PM3",
+   "element": "Cl",
+   "principalQuantumNumber": 3,
+   "zetaS": 2.24621,
+   "zetaP": 2.15101
+  },
+  {
+   "method": "PM3",
+   "element": "F",
+   "principalQuantumNumber": 2,
+   "zetaS": 4.708555,
+   "zetaP": 2.491178
+  },
+  {
+   "method": "PM3",
+   "element": "Ga",
+   "principalQuantumNumber": 4,
+   "zetaS": 1.84704,
+   "zetaP": 0.839411
+  },
+  {
+   "method": "PM3",
+   "element": "Ge",
+   "principalQuantumNumber": 4,
+   "zetaS": 2.2373526,
+   "zetaP": 1.5924319
+  },
+  {
+   "method": "PM3",
+   "element": "H",
+   "principalQuantumNumber": 1,
+   "zetaS": 0.967807,
+   "zetaP": null
+  },
+  {
+   "method": "PM3",
+   "element": "Hg",
+   "principalQuantumNumber": 6,
+   "zetaS": 1.476885,
+   "zetaP": 2.479951
+  },
+  {
+   "method": "PM3",
+   "element": "I",
+   "principalQuantumNumber": 5,
+   "zetaS": 7.001013,
+   "zetaP": 2.454354
+  },
+  {
+   "method": "PM3",
+   "element": "In",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.016116,
+   "zetaP": 1.44535
+  },
+  {
+   "method": "PM3",
+   "element": "K",
+   "principalQuantumNumber": 4,
+   "zetaS": 0.8101687,
+   "zetaP": 0.9578342
+  },
+  {
+   "method": "PM3",
+   "element": "Li",
+   "principalQuantumNumber": 2,
+   "zetaS": 0.65,
+   "zetaP": 0.75
+  },
+  {
+   "method": "PM3",
+   "element": "Mg",
+   "principalQuantumNumber": 3,
+   "zetaS": 0.698552,
+   "zetaP": 1.483453
+  },
+  {
+   "method": "PM3",
+   "element": "N",
+   "principalQuantumNumber": 2,
+   "zetaS": 2.028094,
+   "zetaP": 2.313728
+  },
+  {
+   "method": "PM3",
+   "element": "Na",
+   "principalQuantumNumber": 3,
+   "zetaS": 2.6618938,
+   "zetaP": 0.8837425
+  },
+  {
+   "method": "PM3",
+   "element": "O",
+   "principalQuantumNumber": 2,
+   "zetaS": 3.796544,
+   "zetaP": 2.389402
+  },
+  {
+   "method": "PM3",
+   "element": "P",
+   "principalQuantumNumber": 3,
+   "zetaS": 2.017563,
+   "zetaP": 1.504732
+  },
+  {
+   "method": "PM3",
+   "element": "Pb",
+   "principalQuantumNumber": 6,
+   "zetaS": 3.141289,
+   "zetaP": 1.892418
+  },
+  {
+   "method": "PM3",
+   "element": "S",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.891185,
+   "zetaP": 1.658972
+  },
+  {
+   "method": "PM3",
+   "element": "Sb",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.343039,
+   "zetaP": 1.899992
+  },
+  {
+   "method": "PM3",
+   "element": "Se",
+   "principalQuantumNumber": 4,
+   "zetaS": 2.828051,
+   "zetaP": 1.732536
+  },
+  {
+   "method": "PM3",
+   "element": "Si",
+   "principalQuantumNumber": 3,
+   "zetaS": 1.635075,
+   "zetaP": 1.313088
+  },
+  {
+   "method": "PM3",
+   "element": "Sn",
+   "principalQuantumNumber": 5,
+   "zetaS": 2.373328,
+   "zetaP": 1.638233
+  },
+  {
+   "method": "PM3",
+   "element": "Te",
+   "principalQuantumNumber": 5,
+   "zetaS": 4.165492,
+   "zetaP": 1.647555
+  },
+  {
+   "method": "PM3",
+   "element": "Tl",
+   "principalQuantumNumber": 6,
+   "zetaS": 6.867921,
+   "zetaP": 1.969445
+  },
+  {
+   "method": "PM3",
+   "element": "Zn",
+   "principalQuantumNumber": 4,
+   "zetaS": 1.819989,
+   "zetaP": 1.506922
+  }
+ ]
+}

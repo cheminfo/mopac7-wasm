@@ -121,18 +121,177 @@ milliseconds of decoding and compiling, once per JavaScript realm.
 structured-cloneable: compile it once on the main thread, `postMessage` it to
 every worker, and each one instantiates it in well under a millisecond.
 
+## Drawing an orbital
+
+`result.coefficients` alone cannot be collocated on a grid: a coefficient is a
+number over a basis function, and MOPAC 7 prints not one word about the basis.
+So the package rebuilds it, out of MOPAC's own Fortran.
+
+```js
+import {
+  deorthogonalizeCoefficients,
+  mopac7,
+  mopac7Basis,
+  mopac7OverlapMatrix,
+} from 'mopac7-wasm';
+
+const result = await mopac7({ elements, coordinates, method: 'MNDO' });
+const basis = mopac7Basis(result);
+
+basis.shells[0];
+// { element: 'O', n: 2, l: 0, zeta: 2.699905,
+//   exponents: Float64Array(6), coefficients: Float64Array(6) }
+basis.functions[3];
+// { atomIndex: 0, element: 'O', type: 'Pz', shell: 1, powers: [0, 0, 1] }
+
+// Everything one atomic orbital needs, in bohr.
+const ao = basis.functions[3];
+const shell = basis.shells[ao.shell];
+const center = basis.centers.subarray(ao.atomIndex * 3, ao.atomIndex * 3 + 3);
+
+// And, when the coefficients should be coefficients over those orbitals:
+const overlap = mopac7OverlapMatrix(basis);
+const coefficients = deorthogonalizeCoefficients(
+  result.coefficients,
+  basis,
+  overlap,
+);
+```
+
+`functions` is in the row order of `result.coefficients`, so the coefficient of
+`functions[ao]` in molecular orbital `mo` stays
+`coefficients[mo * functions.length + ao]`. `mopac7AtomicOrbitals(elements,
+method)` produces the same list without running anything, for a caller who wants
+the basis before the calculation; it reproduces `result.basis` exactly. Shells are shared — one per element
+and angular momentum, not one per orbital — and centres are one per atom, so
+paclitaxel's 299 atomic orbitals come back as 7 shells and 113 centres.
+
+### What the basis is
+
+It is MOPAC's own STO-6G expansion of MOPAC's own Slater exponents, and every
+number in it is parsed out of the 1993 archive rather than transcribed:
+
+| what                                                              | where it comes from                                               |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------- |
+| the valence exponents `ZS` and `ZP`, per hamiltonian, per element | `block.f` `DATA ZSM/ZPM`, `ZSAM1/ZPAM1`, `ZSPM3/ZPPM3`, `ZS3/ZP3` |
+| which array belongs to which hamiltonian                          | `moldat.f` lines 93, 125, 157 and 230                             |
+| the principal quantum number                                      | `diat.f` `DATA NPQ`, line 38                                      |
+| how many atomic orbitals an atom gets                             | `block.f` `DATA NATORB`, line 89                                  |
+| the six-gaussian expansion of a Slater orbital                    | `setupg.f` `SETUPG`, Stewart's STO-6G table                       |
+| the `zeta²` scaling and the cartesian normalisation               | `esp.rof` `ELESP` lines 738, 750 and 766 to 769                   |
+| the ångström-to-bohr divisor, `0.529167`                          | `diat.f` line 142 — MOPAC 7's own, 19 ppm below the CODATA value  |
+
+`scripts/generate-basis-tables.mjs` does the reading and writes
+`src/basis/slaterExponents.ts`, `src/basis/sto6g.ts` and a verbatim excerpt of
+every line it read. It refuses to run unless the archive hashes to the digest
+`wasm/BUILD.json` records, and refuses to write a table the excerpt does not
+reproduce; a test re-parses the excerpt on every CI run, so the tables cannot
+drift from the Fortran even where the archive is absent.
+
+Verified against OpenMOPAC 23.2.5, which prints `AO_ZETA`, `ATOM_PQN` and
+`OVERLAP_MATRIX` where MOPAC 7 prints none of them:
+
+- **123 exponents over 66 element-and-hamiltonian pairs are identical**, and so
+  is every principal quantum number. Six differ, all of them lithium and
+  beryllium, because OpenMOPAC re-fitted those after 1993
+  (`parameters_for_mndo_C.F90` line 55, `parameters_for_AM1_C.F90` lines 64 and
+  79). This package keeps MOPAC 7's, which is the number its coefficients were
+  computed with.
+- **The rebuilt overlap matches MOPAC 23's own analytic Slater `OVERLAP_MATRIX`
+  to 1.24e-4** over water, formaldehyde, benzene and pyridine at MNDO, AM1 and
+  PM3. That residual is the six-gaussian expansion itself, not a parameter error:
+  STO-3G on the same exponents is forty times worse.
+- **Every atomic orbital is normalised**: its self-overlap is 1 to 1.2e-10 for
+  the first three rows of the periodic table, and to 2.1e-7 for the fourth,
+  where `setupg.f` prints Stewart's 4s and 4p row to seven significant digits
+  instead of ten.
+
+### The ZDO caveat
+
+NDDO neglects diatomic overlap, which means MOPAC's eigenvectors are not
+coefficients over these orbitals. They are orthonormal over an identity metric;
+over the real Slater overlap they are not. Over water, benzene and pyridine at
+all four hamiltonians — what the test suite runs — the worst `⟨ψ|ψ⟩` is 2.26
+under MNDO and 2.78 under PM3, for orbitals the method calls normalised, and two
+orbitals it calls orthogonal reach an overlap of 0.44.
+
+`deorthogonalizeCoefficients` applies `C_AO = S^(-1/2) C_ZDO`, which is what
+MOPAC itself does before a Mulliken population analysis (`mullik.f` with
+`mult.f`) and before an ESP fit (`esp.rof` `ELESP`). It is the correct thing to
+draw, and **it barely changes the picture.** Over 228 occupied orbitals of water,
+formaldehyde, furan and benzene, collocated on a 0.3 bohr grid: not one node
+moved, not one lobe flipped, no voxel of opposite sign inside any isosurface,
+every π orbital and every HOMO identical. Where the two differ most — the deepest
+valence σ level of an oxygen-bearing molecule — the de-orthogonalised region is
+strictly contained in the raw one. The normalisation error cannot show at all if
+the isovalue is picked as a quantile of the sampled field, because such an
+isovalue has no scale of its own.
+
+So pass the de-orthogonalised coefficients because they are right, not because
+the drawing needs them.
+
+### MNDO has the most physical exponents
+
+The four hamiltonians do not rank the same way for energies and for pictures. The
+mean radius of the valence s orbital, in ångström, is what the exponent decides,
+and it is a three-line calculation over `basis.shells`:
+
+| method  | H     | C     | N         | O         | F         |
+| ------- | ----- | ----- | --------- | --------- | --------- |
+| MNDO    | 0.596 | 0.740 | **0.587** | **0.490** | **0.464** |
+| MINDO/3 | 0.611 | 0.761 | 0.489     | 0.363     | 0.425     |
+| AM1     | 0.668 | 0.731 | 0.571     | 0.426     | 0.351     |
+| PM3     | 0.820 | 0.845 | 0.652     | 0.349     | 0.281     |
+
+Carbon is where the four are closest, and it is also where they agree in the
+drawn field: benzene's occupied valence orbitals come out within 0.986 to 0.989
+of RHF/STO-3G by grid cosine under MNDO, AM1 and PM3 alike, so a hydrocarbon
+draws much the same whichever is used. Oxygen and fluorine are where they part company —
+PM3 makes them 1.4x and 1.7x smaller than MNDO does — and that is what shows:
+water's deepest valence level, the one the oxygen 2s exponent owns, comes out at
+a grid cosine of 0.963 under MNDO and 0.871 under PM3.
+
+**MNDO is the hamiltonian to draw with.** Its nitrogen, oxygen and fluorine
+orbitals are the most diffuse of the four, which is to say the closest to what a
+real minimal basis holds, and its worst contraction against STO-3G is 1.20x
+where MINDO/3 reaches 1.62x, AM1 1.48x and PM3 1.85x.
+
+### Elements without a drawable basis
+
+- **Sodium and potassium are sparkles.** `block.f` gives atomic numbers 11 and 19
+  `NATORB = 0` and no exponent at all, so MOPAC itself prints no coefficient row
+  for them. They still carry a centre in `basis.centers`, so `atomIndex` indexes
+  it directly, and they contribute no basis function. (OpenMOPAC 23 has since
+  parameterised both; MOPAC 7 has not.)
+- **Chromium has a d shell** — `NATORB = 9` — and MOPAC's own STO-6G table
+  expands only s and p, so `mopac7Basis` throws `code: 'input'` and names the
+  reason. Its orbital energies and coefficients are still there; only the
+  drawing is unavailable.
+- **An element the hamiltonian has no parameters for** never gets this far: the
+  deck is refused by `buildMopac7Input` first.
+
 ## API
 
-| export                       | what it does                                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| `mopac7(options)`            | atoms in, a parsed `Mopac7Result` out; throws a `Mopac7Error` on failure                          |
-| `buildMopac7Input(options)`  | atoms in, a MOPAC deck out; no WebAssembly involved                                               |
-| `runMopac7Job(input)`        | a deck in, `{ input, listing, diagnostics, exitCode }` out; never throws for MOPAC's own failures |
-| `parseMopac7Output(listing)` | a listing in, a `Mopac7Result` out; parses a native MOPAC 7 run too, and pins the orbital phases  |
-| `compileMopac7()`            | the cached `WebAssembly.Module`, for warming and for workers                                      |
-| `MOPAC7_ELEMENTS`            | the elements each hamiltonian is parameterised for                                                |
-| `MOPAC7_LIMITS`              | the array bounds this build was compiled with                                                     |
-| `Mopac7Error`                | carries `code`, and the deck and listing that produced the failure                                |
+| export                                             | what it does                                                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `mopac7(options)`                                  | atoms in, a parsed `Mopac7Result` out; throws a `Mopac7Error` on failure                          |
+| `buildMopac7Input(options)`                        | atoms in, a MOPAC deck out; no WebAssembly involved                                               |
+| `runMopac7Job(input)`                              | a deck in, `{ input, listing, diagnostics, exitCode }` out; never throws for MOPAC's own failures |
+| `parseMopac7Output(listing)`                       | a listing in, a `Mopac7Result` out; parses a native MOPAC 7 run too, and pins the orbital phases  |
+| `compileMopac7()`                                  | the cached `WebAssembly.Module`, for warming and for workers                                      |
+| `MOPAC7_ELEMENTS`                                  | the elements each hamiltonian is parameterised for                                                |
+| `MOPAC7_LIMITS`                                    | the array bounds this build was compiled with                                                     |
+| `Mopac7Error`                                      | carries `code`, and the deck and listing that produced the failure                                |
+| `mopac7Basis(result)`                              | the atomic-orbital basis the result was computed in, as contracted cartesian gaussians            |
+| `mopac7AtomicOrbitals(elements, method)`           | the same atomic-orbital list MOPAC prints, without running anything                               |
+| `mopac7OverlapMatrix(basis)`                       | `⟨χᵢ\|χⱼ⟩`, row-major                                                                             |
+| `deorthogonalizeCoefficients(coefficients, basis)` | `S^(-1/2) C`, MOPAC's own way out of the ZDO basis                                                |
+| `inverseSqrtOverlap(overlap, size)`                | `S^(-1/2)` on its own                                                                             |
+| `symmetricEigen(matrix, size)`                     | the symmetric eigenproblem the two above are built on                                             |
+| `contractSlaterShell(n, l, zeta)`                  | one Slater orbital as six normalised gaussians                                                    |
+| `MOPAC7_SLATER_EXPONENTS`                          | the valence exponents and principal quantum numbers, per hamiltonian, per element                 |
+| `MOPAC7_STO6G`                                     | Stewart's STO-6G table as `setupg.f` writes it                                                    |
+| `MOPAC7_BOHR_PER_ANGSTROM`                         | `0.529167`, the divisor MOPAC 7 hard-codes                                                        |
 
 `Mopac7Error.code` is one of `'input'`, `'keywords'`, `'geometry'`,
 `'parameters'`, `'limits'`, `'scf'`, `'halt'`, `'aborted'` or `'parse'`. A run
@@ -199,8 +358,9 @@ benchmark measures the difference at 5.6–6.6x.
 - **The elements MOPAC 7 carries, and no more.** `MOPAC7_ELEMENTS` lists them
   per method — PM3 is the widest at 30 elements, MINDO/3 the narrowest at 10,
   and only PM3 has magnesium while only MNDO and AM1 have lithium. `Na` and `K`
-  are sparkles in AM1 and PM3, not parameterised atoms; MOPAC says so itself in
-  the listing.
+  are sparkles in all three of MNDO, AM1 and PM3, not parameterised atoms —
+  `block.f` gives them no exponent and no atomic orbital, and MOPAC says so
+  itself in the listing.
 - **No transition metals** beyond MNDO chromium and zinc, no dispersion, no
   solvation, no excited states through this API.
 - **No wall-clock budget.** MOPAC's own `T=` limit reads a CPU clock that
